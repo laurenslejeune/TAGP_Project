@@ -1,9 +1,9 @@
 %%%-------------------------------------------------------------------
-%% @doc prj_basic top level supervisor.
+%% @doc prj_genserver top level supervisor.
 %% @end
 %%%-------------------------------------------------------------------
 
--module(prj_basic_sup).
+-module(prj_genserver_sup).
 
 -behaviour(supervisor).
 
@@ -31,7 +31,6 @@ start_link() ->
 %% Before OTP 18 tuples must be used to specify a child. e.g.
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
-    buildSystem:start_3pipes_water_pump_flowmeter(),
     {ok, {{one_for_all, 0, 1}, []}}.
 
 %%====================================================================
