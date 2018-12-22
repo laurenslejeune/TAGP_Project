@@ -44,26 +44,26 @@ pipe_type_test_() ->
 	fun stop/1,
 	fun test_pipe_type/1}}.
 
-pump_basic_test_()->
-	{"Test the basics of creating a pump in a system.",
-	{setup,
-	fun start_3pipes_water_pump/0,
-	fun stop/1,
-	fun test_pump_basics/1}}.
+% pump_basic_test_()->
+% 	{"Test the basics of creating a pump in a system.",
+% 	{setup,
+% 	fun start_3pipes_water_pump/0,
+% 	fun stop/1,
+% 	fun test_pump_basics/1}}.
 	
-pump_operation_test_()->
-	{"Test the basics of operating a pump in a system.",
-	{setup,
-	fun start_3pipes_water_pump/0,
-	fun stop/1,
-	fun test_pump_operation/1}}.
+% pump_operation_test_()->
+% 	{"Test the basics of operating a pump in a system.",
+% 	{setup,
+% 	fun start_3pipes_water_pump/0,
+% 	fun stop/1,
+% 	fun test_pump_operation/1}}.
 
-flowmeter_basic_test_()->
-	{"Test the basics of creating a flowmeter in a system.",
-	{setup,
-	fun start_3pipes_water_pump_flowmeter/0,
-	fun stop/1,
-	fun test_flowmeter_basics/1}}.
+% flowmeter_basic_test_()->
+% 	{"Test the basics of creating a flowmeter in a system.",
+% 	{setup,
+% 	fun start_3pipes_water_pump_flowmeter/0,
+% 	fun stop/1,
+% 	fun test_flowmeter_basics/1}}.
 
 % flowmeter_operation_test_()->
 % 	{"Test the basics of operating a flowmeter in a system.",
@@ -72,19 +72,19 @@ flowmeter_basic_test_()->
 % 	fun stop/1,
 % 	fun test_flowmeter_operation/1}}.
 
-heatex_basic_test_()->
-	{"Test the basics of creating a heat exchanger in a system.",
-	{setup,
-	fun start_3pipes_water_pump_flowmeter_heatex/0,
-	fun stop/1,
-	fun test_heatex_basics/1}}.
+% heatex_basic_test_()->
+% 	{"Test the basics of creating a heat exchanger in a system.",
+% 	{setup,
+% 	fun start_3pipes_water_pump_flowmeter_heatex/0,
+% 	fun stop/1,
+% 	fun test_heatex_basics/1}}.
 
-heatex_operation_test_()->
-	{"Test the basics of operating a heat exchanger in a system.",
-	{setup,
-	fun start_3pipes_water_pump_flowmeter_heatex/0,
-	fun stop/1,
-	fun test_heatex_operation/1}}.
+% heatex_operation_test_()->
+% 	{"Test the basics of operating a heat exchanger in a system.",
+% 	{setup,
+% 	fun start_3pipes_water_pump_flowmeter_heatex/0,
+% 	fun stop/1,
+% 	fun test_heatex_operation/1}}.
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %%% SETUP FUNCTIONS %%%
@@ -121,8 +121,10 @@ has_started({PipeTypePID,Pipes,Connectors,Locations}) ->
 	[Pipe1, Pipe2, Pipe3|_RestPipes] = Pipes,
 	[[C11, C12], [C21,C22], [C31,C32]|_RestConnectors] = Connectors,
 	[L1, L2, L3|_RestLocations] = Locations,
-	%check_has_started(Pipes,[]),
-	%check_has_started(Locations,[]),
+
+	?debugFmt("Testing has started~n",[]),
+
+
 	[?_assert(erlang:is_process_alive(PipeTypePID)),
 	 ?_assert(erlang:is_process_alive(Pipe1)),
 	 ?_assert(erlang:is_process_alive(Pipe2)),
@@ -140,7 +142,7 @@ has_started({PipeTypePID,Pipes,Connectors,Locations}) ->
 basic_connections({_PipeTypePID,Pipes,Connectors,_Locations})->
 	[Pipe1, Pipe2, Pipe3|_RestPipes] = Pipes,
 	[[C11, C12], [C21,C22], [C31,C32]|_RestConnectors] = Connectors,
-	
+	?debugFmt("Testing has basic connections~n",[]),
 	{ok, [P1_C1,P1_C2]} = resource_instance:list_connectors(Pipe1),
 	{ok, [P2_C1,P2_C2]} = resource_instance:list_connectors(Pipe2),
 	{ok, [P3_C1,P3_C2]} = resource_instance:list_connectors(Pipe3),

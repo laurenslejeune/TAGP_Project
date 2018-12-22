@@ -7,11 +7,11 @@
 -export([init/1, test/0]). % for internal use only. 
 
 create(ResInst_Pid, ConnectTyp_Pid) -> 
-	gen_server:start_link(?MODULE,[{ResInst_Pid,ConnectTyp_Pid}],[]).
+	gen_server:start_link(?MODULE,[ResInst_Pid,ConnectTyp_Pid],[]).
 	%spawn(?MODULE, init, [ResInst_Pid, ConnectTyp_Pid]).
 
 
-init({ResInst_Pid, ConnectTyp_Pid}) -> 
+init([ResInst_Pid, ConnectTyp_Pid]) -> 
 	survivor:entry(connector_created), 
 	{ok,{ResInst_Pid,disconnected,ConnectTyp_Pid}}.
 	%%loop(ResInst_Pid, disconnected, ConnectTyp_Pid).

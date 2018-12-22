@@ -4,20 +4,20 @@
 -export([init/1,handle_call/3, handle_cast/2]). 
 
 create(ResInst_Pid, LocationTyp_Pid) ->
-	gen_server:start_link(?MODULE,[{ResInst_Pid, LocationTyp_Pid}],[]).
+	gen_server:start_link(?MODULE,[ResInst_Pid, LocationTyp_Pid],[]).
 	%spawn(?MODULE, init, [ResInst_Pid, LocationTyp_Pid]).
 	
-init({ResInst_Pid, LocationTyp_Pid}) ->
+init([ResInst_Pid, LocationTyp_Pid]) ->
 	{ok,{ResInst_Pid, LocationTyp_Pid, vacant}}.
 	
 get_ResInst(Location_Pid) -> 
-	msg:get(Location_Pid, get_ResInst).
+	{ok,msg:get(Location_Pid, get_ResInst)}.
 
 get_Visitor(Location_Pid) ->
-	msg:get(Location_Pid, get_Visitor).
+	{ok,msg:get(Location_Pid, get_Visitor)}.
 	
 get_Type(Location_Pid) ->
-	msg:get(Location_Pid, get_Type).
+	{ok,msg:get(Location_Pid, get_Type)}.
 	
 arrival(Location_Pid, Visitor_Pid) ->
 	gen_server:cast(Location_Pid,{arrived,Visitor_Pid}).

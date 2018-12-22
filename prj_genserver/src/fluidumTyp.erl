@@ -1,48 +1,41 @@
 -module(fluidumTyp).
+-behaviour(gen_server).
 -include_lib("eunit/include/eunit.hrl").
 
--export([create/0, init/0, discover_circuit/1]).
+-export([create/0, init/1, discover_circuit/1]).
 -export([get_resource_circuit/2]).
+-export([handle_call/3, handle_cast/2]).
 
-create() -> spawn(?MODULE, init, []).
+create() -> 
+	gen_server:start_link(?MODULE,[],[]).
+	%spawn(?MODULE, init, []).
 
-init() -> 
+init([]) -> 
 	survivor:entry(fluidTyp_created), 
-	loop().
+	{ok,[]}.
+	%loop().
 
 get_resource_circuit(TypePid, State) ->
 	?debugFmt("En in de fluidumTyp?~n",[]),
 	msg:get(TypePid, resource_circuit, State). 
 
-loop() -> 
-	receive
-		{initial_state, [ResInst_Pid, [Root_ConnectorPid, TypeOptions]], ReplyFn} -> 
-			{ok, C} = discover_circuit(Root_ConnectorPid), 
-			ReplyFn(#{resInst => ResInst_Pid, circuit => C, typeOptions => TypeOptions}), 
-			loop();
-		{connections_list, _State , ReplyFn} -> 
-			ReplyFn([]), 
-			loop();
-		{locations_list, _State, ReplyFn} -> 
-			ReplyFn([]),
-			loop();
-		{resource_circuit, State, ReplyFn} -> 
-			%?debugFmt("We're going to extract something~n",[]),
-			#{circuit := C} = State,
-			%?debugFmt("We're going to extract  ~p~n",[C]),
-			
-			%Error:
-			%Original code:
-				%ReplyFn(extract(C)),
-			%New code:
-				%{_RootC, CircuitMap} = C,
-				%ReplyFn(extract(CircuitMap)),
-			
-			{_RootC, CircuitMap} = C,
-			ReplyFn(extract(CircuitMap)), 
-			%?debugFmt("Do we succesfully complete the extraction ?~n",[]),
-			loop()
-	end. 
+handle_call({initial_state,[ResInst_Pid, [Root_ConnectorPid, TypeOptions]],_Ref},_From,State)->
+	{ok, C} = discover_circuit(Root_ConnectorPid),
+	{reply,#{resInst => ResInst_Pid, circuit => C, typeOptions => TypeOptions},State};
+
+handle_call({connections_list, _State,_Ref},_From,State)->
+	{reply,[],State};
+
+handle_call({locations_list, _State,_Ref},_From,State)->
+	{reply,[],State};
+
+handle_call({resource_circuit, State,_Ref},_From,State)->
+	#{circuit := C} = State,
+	{_RootC, CircuitMap} = C,
+	{reply,extract(CircuitMap),State}.
+
+handle_cast(_,State)->
+	{noreply,State}.
 
 extract(C) -> extract(maps:next(maps:iterator(C)), #{}).
 

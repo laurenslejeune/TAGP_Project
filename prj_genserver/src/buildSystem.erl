@@ -51,9 +51,11 @@ start_3pipes() ->
 	survivor:start(),
 	
 	%systemSupervisor:start_link(),
-	
+	?debugFmt("Testing has started~n",[]),
 	{ok,PipeTypePID} = resource_type:create(pipeTyp,[]),
+	?debugFmt("Created pipe type ~p~n",[PipeTypePID]),
 	{ok,Pipe1InstPID} = resource_instance:create(pipeInst,[self(),PipeTypePID]),
+	?debugFmt("Created pipe instance ~p~n",[Pipe1InstPID]),
 	{ok,Pipe2InstPID} = resource_instance:create(pipeInst,[self(),PipeTypePID]),
 	{ok,Pipe3InstPID} = resource_instance:create(pipeInst,[self(),PipeTypePID]),
 	{ok,[P1C1,P1C2]} = resource_instance:list_connectors(Pipe1InstPID),
@@ -99,7 +101,7 @@ start_3pipes_water() ->
 	connector:connect(P1C2,P2C1),
 	
 	%Put water in the network
-	FluidumType = fluidumTyp:create(),
+	{ok,FluidumType} = fluidumTyp:create(),
 	{ok, Fluid} = fluidumInst:create(P1C1,FluidumType),
 	%{Root_ConnectorPid, Circuit, ResTyp_Pid} = Fluid,
 	
@@ -147,7 +149,7 @@ start_3pipes_water_pump() ->
 	connector:connect(P1C2,P2C1),
 	
 	%Put water in the network
-	FluidumType = fluidumTyp:create(),
+	{ok,FluidumType} = fluidumTyp:create(),
 	{ok, Fluid} = fluidumInst:create(P1C1,FluidumType),
 	%{Root_ConnectorPid, Circuit, ResTyp_Pid} = Fluid,
 	
@@ -195,7 +197,7 @@ start_3pipes_water_pump_flowmeter() ->
 	connector:connect(P1C2,P2C1),
 	
 	%Put water in the network
-	FluidumType = fluidumTyp:create(),
+	{ok,FluidumType} = fluidumTyp:create(),
 	{ok, Fluid} = fluidumInst:create(P1C1,FluidumType),
 	location:arrival(Location1,Fluid),
 	location:arrival(Location2,Fluid),
@@ -252,7 +254,7 @@ start_3pipes_water_pump_flowmeter_heatex() ->
 	connector:connect(P1C2,P2C1),
 	
 	%Put water in the network
-	FluidumType = fluidumTyp:create(),
+	{ok,FluidumType} = fluidumTyp:create(),
 	{ok, Fluid} = fluidumInst:create(P1C1,FluidumType),
 	location:arrival(Location1,Fluid),
 	location:arrival(Location2,Fluid),
@@ -287,6 +289,7 @@ start_3pipes_water_pump_flowmeter_heatex() ->
 
 stop() ->
 	survivor ! stop,
+
 	%gen_server:call(resource_instance,stop),
 	%pipeTyp:stop(),
 	{ok, stopped}.
