@@ -1,35 +1,36 @@
 -module(heatExchangerInst).
--export([create/4, init/4, temp_influence/1]).
+-behaviour(gen_server).
+-export([handle_call/3, handle_cast/2]).
+-export([create/4, init/1, temp_influence/1]).
 -include_lib("eunit/include/eunit.hrl").
 % HeatExchanger is a pipe and more; this pipe instance is passed to the create function.
 % HeatExchangers have a HE_link to, typically, another HeatExchanger. The link provides 
 % a function that models the mutual effect on the temperature of the flows on either side. 
 
-create(Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec) -> {ok, spawn(?MODULE, init, [Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec])}.
+create(Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec) -> 
+	gen_server:start_link(?MODULE,[Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec],[]).
+	%{ok, spawn(?MODULE, init, [Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec])}.
 
-init(Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec) -> 
+init([Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec]) -> 
 	{ok, State} = apply(resource_type, get_initial_state, [HeatExchangerTyp_Pid, self(), PipeInst_Pid]),
 									%  get_initial_state  (ResTyp_Pid,  ResInst_Pid, TypeOptions) 
 	survivor:entry({ pumpInst_created, State }),
-	loop(Host, State, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec).
+	{ok,{Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec}}.
+	%loop(Host, State, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec).
 
+handle_call({get_type,_Ref},_From,{Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec})->
+	{reply,HeatExchangerTyp_Pid,{Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec}};
 
+handle_call({get_temp_influence,_Ref},_From,{Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec})->
+	{reply,heatExchangeLink:get_temp_influence(HE_link_spec),{Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec}};
+
+handle_call({OtherMessage,_Ref},_From,{Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec})->
+	%Maybe this has to be a cast instead of a call
+	{ok,Answer} = msg:get(PipeInst_Pid,OtherMessage),
+	{reply,Answer,{Host, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec}}.
+
+handle_cast(_,State)->
+	{noreply,State}.
 
 temp_influence(HeatExchangerInst_Pid) -> 
 	msg:get(HeatExchangerInst_Pid, get_temp_influence).
-
-
-loop(Host, State, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec) -> 
-	receive
-		{get_type, ReplyFn} -> 
-			ReplyFn(HeatExchangerTyp_Pid),
-			loop(Host, State, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec);
-		{get_temp_influence, ReplyFn} ->
-			%{ok,Fun} = heatExchangeLink:get_temp_influence(HE_link_spec),
-			%ReplyFn(Fun),
-			ReplyFn(heatExchangeLink:get_temp_influence(HE_link_spec)),
-			loop(Host, State, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec);
-		OtherMessage -> 
-			PipeInst_Pid ! OtherMessage,
-			loop(Host, State, HeatExchangerTyp_Pid, PipeInst_Pid, HE_link_spec)
-end.

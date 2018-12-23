@@ -1,45 +1,42 @@
 -module(flowMeterTyp).
--export([create/0, init/0]).
+-behaviour(gen_server).
+-export([handle_call/3,handle_cast/2]).
+-export([create/0, init/1]).
 % -export([dispose/2, enable/2, new_version/2]).
 % -export([get_initial_state/3, get_connections_list/2]). % use resource_type
 % -export([update/3, execute/7, refresh/4, cancel/4, update/7, available_ops/2]). 
 -include_lib("eunit/include/eunit.hrl").
 
-create() -> {ok, spawn(?MODULE, init, [])}.
+create() -> 
+	gen_server:start_link(?MODULE,[],[]).
+	%{ok, spawn(?MODULE, init, [])}.
 
-init() -> 
+init([]) -> 
 	survivor:entry(flowMeterTyp_created),
-	loop().
+	{ok,[]}.
+	%loop().
 
-loop() -> 
-	receive
-		{initial_state, [MeterInst_Pid, [ResInst_Pid, RealWorldCmdFn]], ReplyFn} ->
-			%Changed:
-			%{ok, [L | _ ] } = resource_instance:get_list_locations(ResInst_Pid),
-			%to
-			%{ok, [L | _ ] } = resource_instance:list_locations(ResInst_Pid),
-			{ok, [L | _ ] } = resource_instance:list_locations(ResInst_Pid),
-			{ok, Fluidum} = location:get_Visitor(L),
-			ReplyFn(#{meterInst => MeterInst_Pid, resInst => ResInst_Pid, 
-					  fluidum => Fluidum, rw_cmd => RealWorldCmdFn}), 
-			loop();
-		{measure_flow, State, ReplyFn} -> 
-			#{rw_cmd := ExecFn} = State,
-			ReplyFn(ExecFn()),
-			loop(); 
-		{estimate_flow, State, ReplyFn} -> 
-			?debugFmt("flowMeterTyp Now we will estimate the flow~n",[]),
-			#{fluidum := F} = State, 
-			?debugFmt("We have a fluidum ~p~n",[F]),
-			{ok, C} = fluidumInst:get_resource_circuit(F),
-			?debugFmt("Fluidum gives the circuit map ~p~n",[C]),
-			ReplyFn(computeFlow(C)),
-			loop(); 
-		{isOn, State, ReplyFn} -> 
-			#{on_or_off := OnOrOff} = State, 
-			ReplyFn(OnOrOff),
-			loop()
-	end. 
+handle_call({initial_state, [MeterInst_Pid, [ResInst_Pid, RealWorldCmdFn]],_Ref},_From,[])->
+	{ok, [L | _ ] } = resource_instance:list_locations(ResInst_Pid),
+	{ok, Fluidum} = location:get_Visitor(L),
+	State = #{meterInst => MeterInst_Pid, resInst => ResInst_Pid, fluidum => Fluidum, rw_cmd => RealWorldCmdFn},
+	{reply,State,[]};
+
+handle_call({measure_flow,State,_Ref},_From,[])->
+	#{rw_cmd := ExecFn} = State,
+	{reply,ExecFn(),[]};
+
+handle_call({estimate_flow,State,_Ref},_From,[])->
+	#{fluidum := F} = State,
+	{ok, C} = fluidumInst:get_resource_circuit(F),
+	{reply,computeFlow(C),[]};
+
+handle_call({isOn,State,_Ref},_From,[])->
+	#{on_or_off := OnOrOff} = State,
+	{reply,OnOrOff,[]}.
+
+handle_cast(_,[])->
+	{noreply,[]}.
 
 computeFlow(ResCircuit) -> 
  	Interval = {0, 10}, % ToDo >> discover upper bound for flow.

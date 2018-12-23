@@ -1,42 +1,45 @@
 -module(pumpTyp).
--export([create/0, init/0]).
+-behaviour(gen_server).
+-export([create/0, init/1]).
+-export([handle_call/3, handle_cast/2]).
 -include_lib("eunit/include/eunit.hrl").
 % -export([dispose/2, enable/2, new_version/2]).
 % -export([get_initial_state/3, get_connections_list/2]). % use resource_type
 % -export([update/3, execute/7, refresh/4, cancel/4, update/7, available_ops/2]). 
 
-create() -> {ok, spawn(?MODULE, init, [])}.
+create() -> 
+	gen_server:start_link(?MODULE,[],[]).
+	%{ok, spawn(?MODULE, init, [])}.
 
-init() -> 
+init([]) -> 
 	survivor:entry(pumpTyp_created),
-	loop().
+	{ok,[]}.
+	%loop().
 
-loop() -> 
-	receive
+handle_call({initial_state, [ResInst_Pid, [PipeInst_Pid, RealWorldCmdFn]],_Ref},_From,_)->
+	Reply = #{resInst => ResInst_Pid, pipeInst => PipeInst_Pid, 
+					  rw_cmd => RealWorldCmdFn, on_or_off => off},
+	{reply,Reply,[]};
 
-%    get_initial_state, self(),     ]
-		{initial_state, [ResInst_Pid, [PipeInst_Pid, RealWorldCmdFn]], ReplyFn} ->
-			ReplyFn(#{resInst => ResInst_Pid, pipeInst => PipeInst_Pid, 
-					  rw_cmd => RealWorldCmdFn, on_or_off => off}), 
-			loop();
-		{switchOff, State, ReplyFn} -> 
-			#{rw_cmd := ExecFn} = State, ExecFn(off), 
-			ReplyFn(State#{on_or_off := off}),
-			loop(); 
-		{switchOn, State, ReplyFn} -> 
-			#{rw_cmd := ExecFn} = State, ExecFn(on), 
-			ReplyFn(State#{on_or_off := on}),
-			loop(); 
-		{isOn, State, ReplyFn} -> 
-			#{on_or_off := OnOrOff} = State, 
-			ReplyFn(OnOrOff),
-			loop();
-		{flow_influence, State, ReplyFn} -> 
-			#{on_or_off := OnOrOff} = State,
-			FlowInfluenceFn = fun(Flow) -> flow(Flow, OnOrOff) end, % placeholder only. 
-			ReplyFn(FlowInfluenceFn), 
-			loop()
-	end. 
+handle_call({flow_influence, State,_Ref},_From,_)->
+	#{on_or_off := OnOrOff} = State,
+	FlowInfluenceFn = fun(Flow) -> flow(Flow, OnOrOff) end, % placeholder only. 
+	{reply,FlowInfluenceFn,[]};
+
+handle_call({switchOff, State, _Ref},_From,_)->
+	#{rw_cmd := ExecFn} = State, ExecFn(off),
+	{reply,State#{on_or_off := off},[]};
+
+handle_call({switchOn, State, _Ref},_From,_)->
+	#{rw_cmd := ExecFn} = State, ExecFn(on),
+	{reply,State#{on_or_off := on},[]};
+
+handle_call({isOn, State, _Ref},_From,_)->
+	#{on_or_off := OnOrOff} = State, 
+	{reply,OnOrOff,[]}.
+
+handle_cast(_,State)->
+	{noreply,State}.
 
 flow(Flow, on)  -> (250 - 5 * Flow - 2 * Flow * Flow);
 flow(_Flow, off) -> 0. 

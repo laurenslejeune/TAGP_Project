@@ -51,11 +51,11 @@ start_3pipes() ->
 	survivor:start(),
 	
 	%systemSupervisor:start_link(),
-	?debugFmt("Testing has started~n",[]),
+	%?debugFmt("Testing has started~n",[]),
 	{ok,PipeTypePID} = resource_type:create(pipeTyp,[]),
-	?debugFmt("Created pipe type ~p~n",[PipeTypePID]),
+	%?debugFmt("Created pipe type ~p~n",[PipeTypePID]),
 	{ok,Pipe1InstPID} = resource_instance:create(pipeInst,[self(),PipeTypePID]),
-	?debugFmt("Created pipe instance ~p~n",[Pipe1InstPID]),
+	%?debugFmt("Created pipe instance ~p~n",[Pipe1InstPID]),
 	{ok,Pipe2InstPID} = resource_instance:create(pipeInst,[self(),PipeTypePID]),
 	{ok,Pipe3InstPID} = resource_instance:create(pipeInst,[self(),PipeTypePID]),
 	{ok,[P1C1,P1C2]} = resource_instance:list_connectors(Pipe1InstPID),
@@ -209,6 +209,7 @@ start_3pipes_water_pump_flowmeter() ->
 					{ok,real_flow}
 				end,
 	{ok, FlowMeterInst} = flowMeterInst:create(self(),FlowMeterTyp,Pipe2InstPID, FlowMeterCMD),
+
 	%Output data sorting
 	Pipes = [Pipe1InstPID,Pipe2InstPID,Pipe3InstPID],
 	ConnectorsPipe1 = [P1C1,P1C2],

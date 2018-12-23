@@ -44,26 +44,26 @@ pipe_type_test_() ->
 	fun stop/1,
 	fun test_pipe_type/1}}.
 
-% pump_basic_test_()->
-% 	{"Test the basics of creating a pump in a system.",
-% 	{setup,
-% 	fun start_3pipes_water_pump/0,
-% 	fun stop/1,
-% 	fun test_pump_basics/1}}.
+pump_basic_test_()->
+	{"Test the basics of creating a pump in a system.",
+	{setup,
+	fun start_3pipes_water_pump/0,
+	fun stop/1,
+	fun test_pump_basics/1}}.
 	
-% pump_operation_test_()->
-% 	{"Test the basics of operating a pump in a system.",
-% 	{setup,
-% 	fun start_3pipes_water_pump/0,
-% 	fun stop/1,
-% 	fun test_pump_operation/1}}.
+pump_operation_test_()->
+	{"Test the basics of operating a pump in a system.",
+	{setup,
+	fun start_3pipes_water_pump/0,
+	fun stop/1,
+	fun test_pump_operation/1}}.
 
-% flowmeter_basic_test_()->
-% 	{"Test the basics of creating a flowmeter in a system.",
-% 	{setup,
-% 	fun start_3pipes_water_pump_flowmeter/0,
-% 	fun stop/1,
-% 	fun test_flowmeter_basics/1}}.
+flowmeter_basic_test_()->
+	{"Test the basics of creating a flowmeter in a system.",
+	{setup,
+	fun start_3pipes_water_pump_flowmeter/0,
+	fun stop/1,
+	fun test_flowmeter_basics/1}}.
 
 % flowmeter_operation_test_()->
 % 	{"Test the basics of operating a flowmeter in a system.",
@@ -72,19 +72,19 @@ pipe_type_test_() ->
 % 	fun stop/1,
 % 	fun test_flowmeter_operation/1}}.
 
-% heatex_basic_test_()->
-% 	{"Test the basics of creating a heat exchanger in a system.",
-% 	{setup,
-% 	fun start_3pipes_water_pump_flowmeter_heatex/0,
-% 	fun stop/1,
-% 	fun test_heatex_basics/1}}.
+heatex_basic_test_()->
+	{"Test the basics of creating a heat exchanger in a system.",
+	{setup,
+	fun start_3pipes_water_pump_flowmeter_heatex/0,
+	fun stop/1,
+	fun test_heatex_basics/1}}.
 
-% heatex_operation_test_()->
-% 	{"Test the basics of operating a heat exchanger in a system.",
-% 	{setup,
-% 	fun start_3pipes_water_pump_flowmeter_heatex/0,
-% 	fun stop/1,
-% 	fun test_heatex_operation/1}}.
+heatex_operation_test_()->
+	{"Test the basics of operating a heat exchanger in a system.",
+	{setup,
+	fun start_3pipes_water_pump_flowmeter_heatex/0,
+	fun stop/1,
+	fun test_heatex_operation/1}}.
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %%% SETUP FUNCTIONS %%%
@@ -250,7 +250,6 @@ test_pump_operation({_PipeTypePID,_Pipes,_Connectors,_Locations,_FluidumType,_Fl
 
 	%Then, the pump is switched on
 	pumpInst:switch_on(PumpInst),
-
 	%Test if the pump now actually is on
 	{ok,OnOff3} = pumpInst:is_on(PumpInst),
 	Test2 = ?_assertEqual(OnOff3,on),
