@@ -44,6 +44,20 @@ pipe_type_test_() ->
 	fun stop/1,
 	fun test_pipe_type/1}}.
 
+fluidum_basic_test() ->
+	{"Check the basics functioning of the fluidum modules",
+	{setup,
+	fun start_3pipes_water/0,
+	fun stop/1,
+	fun test_fluidum_basics/1}}.
+
+fluidum_operations_test() ->
+	{"Check the basic operations of the fluidum modules",
+	{setup,
+	fun start_3pipes_water/0,
+	fun stop/1,
+	fun test_fluidum_operations/1}}.
+
 pump_basic_test_()->
 	{"Test the basics of creating a pump in a system.",
 	{setup,
@@ -97,6 +111,10 @@ heatex_operation_test_()->
 start_3pipes() ->
 	{ok, {PipeTypePID,Pipes,Connectors,Locations}} = buildSystem:start_3pipes(),
 	{PipeTypePID,Pipes,Connectors,Locations}.
+
+start_3pipes_water()->
+	{ok, {PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid}} = buildSystem:start_3pipes_water_pump(),
+	{PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid}.
 
 start_3pipes_water_pump()->
 	{ok, {PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid,PumpInst,PumpTypPID}} = buildSystem:start_3pipes_water_pump(),
@@ -236,6 +254,44 @@ test_pipe_type({PipeTypePID,Pipes,_Connectors,_Locations}) ->
 	?_assertEqual(PipeTypePID,ResType2),
 	?_assertEqual(PipeTypePID,ResType3)].
 	
+
+test_fluidum_basics({_,_,_,Locations,FluidumType,Fluid})->
+	[Location1, Location2, Location3] = Locations,
+	
+	%%Test if the processes exist
+	Test1 = ?_assert(erlang:is_process_alive(FluidumType)),
+	Test2 = ?_assert(erlang:is_process_alive(Fluid)),
+
+	%Test if the fluidum was correctly added to the pipe-locations
+	Test3 = ?_assertEqual(location:get_Visitor(Location1),Fluid),
+	Test4 = ?_assertEqual(location:get_Visitor(Location2),Fluid),
+	Test5 = ?_assertEqual(location:get_Visitor(Location3),Fluid), 
+	[Test1,Test2,Test3,Test4,Test5].
+
+test_fluidum_operations({_,Pipes,Connectors,Locations,FluidumType,Fluid})->
+	[Connector|_] = Connectors,
+	%1) Test get_type
+	{ok,Type} = msg:get(Fluid,get_type),
+	Test1 = ?_assertEqual(Type,FluidumType),
+
+	%2) Test get_locations
+	{ok,L_List} = msg:get(Fluid,get_locations),
+	Test2  = ?_assertEqual(L_List,[]),
+
+	%3) Test resource circuit
+	{ok,Circuit} = msg:get(Fluid,get_resource_circuit),
+	CheckList = testFunctions:check_circuit_map(Pipes,Circuit),
+	ListIsTrue  = testFunctions:list_is_true(CheckList),
+	Test3 = ?_assert(ListIsTrue),
+
+	%4) Test discover_circuit
+	{ok,{RootC,C_Circuit}} = fluidumTyp:discover_circuit(Connector),
+	CheckList2 = testFunctions:check_circuit_map(Connectors,C_Circuit),
+	ListIsTrue2  = testFunctions:list_is_true(CheckList2),
+	Test4 = ?_assert(ListIsTrue2),
+	Test5 = ?_assertEqual(RootC,Connector),
+
+	[Test1,Test2,Test3,Test4,Test5].
 
 test_pump_basics({_PipeTypePID,_Pipes,_Connectors,_Locations,_FluidumType,_Fluid,PumpInst,PumpTypPID})->
 	[?_assert(erlang:is_process_alive(PumpTypPID)),

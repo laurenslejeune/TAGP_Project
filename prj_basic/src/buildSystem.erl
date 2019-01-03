@@ -101,8 +101,11 @@ start_3pipes_water() ->
 	%Put water in the network
 	FluidumType = fluidumTyp:create(),
 	{ok, Fluid} = fluidumInst:create(P1C1,FluidumType),
-	%{Root_ConnectorPid, Circuit, ResTyp_Pid} = Fluid,
 	
+	location:arrival(Location1,Fluid),
+	location:arrival(Location2,Fluid),
+	location:arrival(Location3,Fluid),
+
 	%Output data sorting
 	Pipes = [Pipe1InstPID,Pipe2InstPID,Pipe3InstPID],
 	ConnectorsPipe1 = [P1C1,P1C2],
