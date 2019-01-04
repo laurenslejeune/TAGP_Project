@@ -3,6 +3,7 @@
 -export([start_3pipes_water_pump_flowmeter/0,start_3pipes_water_pump_flowmeter_heatex/0]).
 -export([start_Npipes_circle/1]).
 -export([connectPipesCircle/1, generateNpipes/3, getAllConnectors/1]).
+-export([start_3pipes_water_pump_no_survivor/0]).
 -include_lib("eunit/include/eunit.hrl").
 
 
@@ -115,6 +116,59 @@ start_3pipes_water() ->
 	Locations = [Location1, Location2, Location3],
 	{ok, {PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid}}.	
 
+start_3pipes_water_pump_no_survivor() ->
+	%survivor:start(),
+	%?debugFmt("Started survivor for 3pipes water pump~n",[]),
+	
+	%Create a pyramid network with 3 pipes
+	{ok,PipeTypePID} = resource_type:create(pipeTyp,[]),
+	{ok,Pipe1InstPID} = resource_instance:create(pipeInst,[self(),PipeTypePID]),
+	{ok,Pipe2InstPID} = resource_instance:create(pipeInst,[self(),PipeTypePID]),
+	{ok,Pipe3InstPID} = resource_instance:create(pipeInst,[self(),PipeTypePID]),
+	{ok,[P1C1,P1C2]} = resource_instance:list_connectors(Pipe1InstPID),
+	{ok,[P2C1,P2C2]} = resource_instance:list_connectors(Pipe2InstPID),
+	{ok,[P3C1,P3C2]} = resource_instance:list_connectors(Pipe3InstPID),
+	
+	{ok,[Location1]} = resource_instance:list_locations(Pipe1InstPID),
+	{ok,[Location2]} = resource_instance:list_locations(Pipe2InstPID),
+	{ok,[Location3]} = resource_instance:list_locations(Pipe3InstPID),
+	
+	connector:connect(P2C2,P3C1),
+	connector:connect(P1C1,P3C2),
+	connector:connect(P1C2,P2C1),
+
+	%Create a pump type
+	{ok,PumpTypPID} = pumpTyp:create(),
+	%Instantiate the real world command function
+	Fun = fun(on) ->
+			{ok,on};
+			(off)->
+			{ok,off}
+		end,
+	%Now create an actual pump
+	{ok,PumpInst} = pumpInst:create(self(), PumpTypPID, Pipe1InstPID, Fun),
+	%This pump is created on top of an existing pipe! That means the underlying
+	%pipe still needs to be connected to other pipes
+	
+	%Put water in the network
+	FluidumType = fluidumTyp:create(),
+	{ok, Fluid} = fluidumInst:create(P1C1,FluidumType),
+	location:arrival(Location1,Fluid),
+	location:arrival(Location2,Fluid),
+	location:arrival(Location3,Fluid),
+
+	%{Root_ConnectorPid, Circuit, ResTyp_Pid} = Fluid,
+	
+	%Output data sorting
+	Pipes = [Pipe1InstPID,Pipe2InstPID,Pipe3InstPID],
+	ConnectorsPipe1 = [P1C1,P1C2],
+	ConnectorsPipe2 = [P2C1,P2C2],
+	ConnectorsPipe3 = [P3C1,P3C2],
+	Connectors = [ConnectorsPipe1,ConnectorsPipe2,ConnectorsPipe3],
+	Locations = [Location1, Location2, Location3],
+	{ok, {PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid,PumpInst,PumpTypPID}}.
+
+
 start_3pipes_water_pump() ->
 	survivor:start(),
 	%?debugFmt("Started survivor for 3pipes water pump~n",[]),
@@ -132,6 +186,10 @@ start_3pipes_water_pump() ->
 	{ok,[Location2]} = resource_instance:list_locations(Pipe2InstPID),
 	{ok,[Location3]} = resource_instance:list_locations(Pipe3InstPID),
 	
+	connector:connect(P2C2,P3C1),
+	connector:connect(P1C1,P3C2),
+	connector:connect(P1C2,P2C1),
+
 	%Create a pump type
 	{ok,PumpTypPID} = pumpTyp:create(),
 	%Instantiate the real world command function
@@ -144,14 +202,14 @@ start_3pipes_water_pump() ->
 	{ok,PumpInst} = pumpInst:create(self(), PumpTypPID, Pipe1InstPID, Fun),
 	%This pump is created on top of an existing pipe! That means the underlying
 	%pipe still needs to be connected to other pipes
-
-	connector:connect(P2C2,P3C1),
-	connector:connect(P1C1,P3C2),
-	connector:connect(P1C2,P2C1),
 	
 	%Put water in the network
 	FluidumType = fluidumTyp:create(),
 	{ok, Fluid} = fluidumInst:create(P1C1,FluidumType),
+	location:arrival(Location1,Fluid),
+	location:arrival(Location2,Fluid),
+	location:arrival(Location3,Fluid),
+
 	%{Root_ConnectorPid, Circuit, ResTyp_Pid} = Fluid,
 	
 	%Output data sorting

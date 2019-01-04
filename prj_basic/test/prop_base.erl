@@ -18,6 +18,7 @@ prop_test_flow_influence() ->
 	%Request the influence for a given flow on that pump
 	%Calculate the influence, and compare the 2 values
 	%Repeat this many times
+	survivor:start(),
 	?FORALL(Flow,integer(0,1000),test_flow_influence(Flow)).
 
 %%%%%%%%%%%%%%%
@@ -43,12 +44,12 @@ test_discover_circuit_N(N) ->
 	end.
 	
 test_flow_influence(Flow)->
-	{ok,{_,_,_,_,_,_,PumpInst,_}} = buildSystem:start_3pipes_water_pump(),
+	{ok,{_,_,_,_,_,_,PumpInst,_}} = buildSystem:start_3pipes_water_pump_no_survivor(),
 	pumpInst:switch_on(PumpInst),
 	{ok, InfluenceFunction1} = pumpInst:flow_influence(PumpInst),
 	Influence1 = InfluenceFunction1(Flow),
 	Influence2 = 250 - 5 * Flow - 2 * Flow * Flow,
-	buildSystem:stop(),
+	%buildSystem:stop(),
 	Influence1 == Influence2.
 
 
