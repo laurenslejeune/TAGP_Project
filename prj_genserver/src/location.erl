@@ -14,7 +14,7 @@ get_ResInst(Location_Pid) ->
 	{ok,msg:get(Location_Pid, get_ResInst)}.
 
 get_Visitor(Location_Pid) ->
-	{ok,msg:get(Location_Pid, get_Visitor)}.
+	msg:get(Location_Pid, get_Visitor).
 	
 get_Type(Location_Pid) ->
 	{ok,msg:get(Location_Pid, get_Type)}.

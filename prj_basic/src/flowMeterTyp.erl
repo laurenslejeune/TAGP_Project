@@ -28,11 +28,11 @@ loop() ->
 			ReplyFn(ExecFn()),
 			loop(); 
 		{estimate_flow, State, ReplyFn} -> 
-			?debugFmt("flowMeterTyp Now we will estimate the flow~n",[]),
+			%?debugFmt("flowMeterTyp Now we will estimate the flow~n",[]),
 			#{fluidum := F} = State, 
-			?debugFmt("We have a fluidum ~p~n",[F]),
+			%?debugFmt("We have a fluidum ~p~n",[F]),
 			{ok, C} = fluidumInst:get_resource_circuit(F),
-			?debugFmt("Fluidum gives the circuit map ~p~n",[C]),
+			%?debugFmt("Fluidum gives the circuit map ~p~n",[C]),
 			ReplyFn(computeFlow(C)),
 			loop(); 
 		{isOn, State, ReplyFn} -> 
@@ -60,10 +60,13 @@ compute({Low, High}, _InflFnCircuit) when (High - Low) < 1 ->
 	(Low + High) / 2 ;
 	
 compute({Low, High}, InflFnCircuit) ->
+
 	L = eval(Low, InflFnCircuit, 0),
 	H = eval(High, InflFnCircuit, 0),
+	%?debugFmt("H1 is ~p~n",[H]),
 	L = eval(Low, InflFnCircuit, 0),
 	H = eval(High, InflFnCircuit, 0),
+	%?debugFmt("H2 is ~p~n",[H]),
 	Mid = (H + L) / 2, M = eval(Mid, InflFnCircuit, 0),
 	if 	M > 0 -> 
 			compute({Low, Mid}, InflFnCircuit);

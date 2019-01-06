@@ -16,21 +16,21 @@ init([]) ->
 	%loop().
 
 get_resource_circuit(TypePid, State) ->
-	?debugFmt("En in de fluidumTyp?~n",[]),
+	%?debugFmt("En in de fluidumTyp?: ~p~n",[State]),
 	msg:get(TypePid, resource_circuit, State). 
 
 handle_call({initial_state,[ResInst_Pid, [Root_ConnectorPid, TypeOptions]],_Ref},_From,State)->
 	{ok, C} = discover_circuit(Root_ConnectorPid),
 	{reply,#{resInst => ResInst_Pid, circuit => C, typeOptions => TypeOptions},State};
 
-handle_call({connections_list, _State,_Ref},_From,State)->
+handle_call({connections_list, _,_Ref},_From,State)->
 	{reply,[],State};
 
-handle_call({locations_list, _State,_Ref},_From,State)->
+handle_call({locations_list, _,_Ref},_From,State)->
 	{reply,[],State};
 
-handle_call({resource_circuit, State,_Ref},_From,State)->
-	#{circuit := C} = State,
+handle_call({resource_circuit, CircuitState,_Ref},_From,State)->
+	#{circuit := C} = CircuitState,
 	{_RootC, CircuitMap} = C,
 	{reply,extract(CircuitMap),State}.
 

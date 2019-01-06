@@ -11,7 +11,7 @@ init() ->
 	loop().
 
 get_resource_circuit(TypePid, State) ->
-	?debugFmt("En in de fluidumTyp?~n",[]),
+	%?debugFmt("En in de fluidumTyp?~n",[]),
 	msg:get(TypePid, resource_circuit, State). 
 
 loop() -> 

@@ -19,6 +19,7 @@ init([]) ->
 handle_call({initial_state, [MeterInst_Pid, [ResInst_Pid, RealWorldCmdFn]],_Ref},_From,[])->
 	{ok, [L | _ ] } = resource_instance:list_locations(ResInst_Pid),
 	{ok, Fluidum} = location:get_Visitor(L),
+	?debugFmt("FLuiduim is ~p~n",[Fluidum]),
 	State = #{meterInst => MeterInst_Pid, resInst => ResInst_Pid, fluidum => Fluidum, rw_cmd => RealWorldCmdFn},
 	{reply,State,[]};
 

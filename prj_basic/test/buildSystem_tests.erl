@@ -10,53 +10,58 @@
 %%% TESTS DESCRIPTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 start_stop_test_() ->
-	{"The system can be started and stopped, and all processes exist",
+	{"1) The system can be started and stopped, and all processes exist
+	  2) Test if the given pipes are really connected to their connectors
+	  3) Test if the network can be traversed, from one pipe to another
+	  4) Test if the network can be traversed, storing information about Pipe, Connector and Location
+	  5) Check if the pipe resource instances belong to the pipeTyp type",
 	{foreach,
 	fun start_3pipes/0,
-	fun stop/1,
-	[fun has_started/1]}}.
+	fun stop_survivor/1,
+	[fun has_started/1,fun basic_connections/1,fun traverse_pipe/1,fun test_pipes_connectors_locations/1,fun test_pipe_type/1]}}.
 
-basic_connections_test_test_() ->
-	{"Test if the given pipes are really connected to their connectors",
-	{setup,
-	fun start_3pipes/0,
-	fun stop/1,
-	fun basic_connections/1}}.	
+% basic_connections_test_test_() ->
+% 	{"Test if the given pipes are really connected to their connectors",
+% 	{setup,
+% 	fun start_3pipes/0,
+% 	fun stop_survivor/1,
+% 	fun basic_connections/1}}.	
 
-traverse_test_() ->
-	{"Test if the network can be traversed, from one pipe to another",
-	{setup,
-	fun start_3pipes/0,
-	fun stop/1,
-	fun traverse_pipe/1}}.
+% traverse_test_() ->
+% 	{"Test if the network can be traversed, from one pipe to another",
+% 	{setup,
+% 	fun start_3pipes/0,
+% 	fun stop_survivor/1,
+% 	fun traverse_pipe/1}}.
 	
-test_all_connectors_test_() ->
-	{"Test if the network can be traversed, storing information about Pipe, Connector and Location",
-	{setup,
-	fun start_3pipes/0,
-	fun stop/1,
-	fun test_pipes_connectors_locations/1}}.
+% test_all_connectors_test_() ->
+% 	{"Test if the network can be traversed, storing information about Pipe, Connector and Location",
+% 	{setup,
+% 	fun start_3pipes/0,
+% 	fun stop_survivor/1,
+% 	fun test_pipes_connectors_locations/1}}.
 
-pipe_type_test_() ->
-	{"Check if the pipe resource instances belong to the pipeTyp type",
-	{setup,
-	fun start_3pipes/0,
-	fun stop/1,
-	fun test_pipe_type/1}}.
+% pipe_type_test_() ->
+% 	{"Check if the pipe resource instances belong to the pipeTyp type",
+% 	{setup,
+% 	fun start_3pipes/0,
+% 	fun stop_survivor/1,
+% 	fun test_pipe_type/1}}.
 
 fluidum_basic_test() ->
-	{"Check the basics functioning of the fluidum modules",
-	{setup,
+	{"1) Check the basics functioning of the fluidum modules
+	  2) Check the basic operations of the fluidum modules",
+	{foreach,
 	fun start_3pipes_water/0,
-	fun stop/1,
-	fun test_fluidum_basics/1}}.
+	fun stop_survivor/1,
+	[fun test_fluidum_basics/1,fun test_fluidum_operations/1]}}.
 
-fluidum_operations_test() ->
-	{"Check the basic operations of the fluidum modules",
-	{setup,
-	fun start_3pipes_water/0,
-	fun stop/1,
-	fun test_fluidum_operations/1}}.
+% fluidum_operations_test() ->
+% 	{"Check the basic operations of the fluidum modules",
+% 	{setup,
+% 	fun start_3pipes_water/0,
+% 	fun stop_survivor/1,
+% 	fun test_fluidum_operations/1}}.
 
 pump_basic_test_()->
 	{"Test the basics of creating a pump in a system.",
@@ -79,12 +84,12 @@ flowmeter_basic_test_()->
 	fun stop/1,
 	fun test_flowmeter_basics/1}}.
 
-% flowmeter_operation_test_()->
-% 	{"Test the basics of operating a flowmeter in a system.",
-% 	{setup,
-% 	fun start_3pipes_water_pump_flowmeter/0,
-% 	fun stop/1,
-% 	fun test_flowmeter_operation/1}}.
+flowmeter_operation_test_()->
+	{"Test the basics of operating a flowmeter in a system.",
+	{setup,
+	fun start_3pipes_water_pump_flowmeter/0,
+	fun stop/1,
+	fun test_flowmeter_operation/1}}.
 
 heatex_basic_test_()->
 	{"Test the basics of creating a heat exchanger in a system.",
@@ -105,28 +110,32 @@ heatex_operation_test_()->
 %%%%%%%%%%%%%%%%%%%%%%%
 
 %%Opmerking: Als de testmodule halverwege de tests crasht (en dus niet op de juiste manier afsluit),
-%%wordt de start_link nooit beÃ«indigd en kan je de start() niet opnieuw gebruiken omdat er een pipeTyp
+%%wordt de start_link nooit beëindigd en kan je de start() niet opnieuw gebruiken omdat er een pipeTyp
 %%proces running is
 
 start_3pipes() ->
-	{ok, {PipeTypePID,Pipes,Connectors,Locations}} = buildSystem:start_3pipes(),
+	survivor:start(),
+	{ok, {PipeTypePID,Pipes,Connectors,Locations}} = buildSystem:start_3pipes(false),
 	{PipeTypePID,Pipes,Connectors,Locations}.
 
 start_3pipes_water()->
-	{ok, {PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid}} = buildSystem:start_3pipes_water_pump(),
+	{ok, {PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid}} = buildSystem:start_3pipes_water(false),
 	{PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid}.
 
 start_3pipes_water_pump()->
-	{ok, {PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid,PumpInst,PumpTypPID}} = buildSystem:start_3pipes_water_pump(),
+	{ok, {PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid,PumpInst,PumpTypPID}} = buildSystem:start_3pipes_water_pump(true),
 	{PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid,PumpInst,PumpTypPID}.
 
 start_3pipes_water_pump_flowmeter()->
-	{ok, {PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid,Tasks}} = buildSystem:start_3pipes_water_pump_flowmeter(),
+	{ok, {PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid,Tasks}} = buildSystem:start_3pipes_water_pump_flowmeter(true),
 	{PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid,Tasks}.
 
 start_3pipes_water_pump_flowmeter_heatex()->
-	{ok, {PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid,Tasks}} = buildSystem:start_3pipes_water_pump_flowmeter_heatex(),
+	{ok, {PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid,Tasks}} = buildSystem:start_3pipes_water_pump_flowmeter_heatex(true),
 	{PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid,Tasks}.
+
+stop_survivor(_)->
+	survivor ! stop.
 
 stop(_) ->
 	buildSystem:stop().
@@ -268,7 +277,7 @@ test_fluidum_basics({_,_,_,Locations,FluidumType,Fluid})->
 	Test5 = ?_assertEqual(location:get_Visitor(Location3),Fluid), 
 	[Test1,Test2,Test3,Test4,Test5].
 
-test_fluidum_operations({_,Pipes,Connectors,Locations,FluidumType,Fluid})->
+test_fluidum_operations({_,Pipes,Connectors,_,FluidumType,Fluid})->
 	[Connector|_] = Connectors,
 	%1) Test get_type
 	{ok,Type} = msg:get(Fluid,get_type),
@@ -333,27 +342,34 @@ test_flowmeter_basics({_,_,_,_,_,_,Tasks})->
 	[?_assert(erlang:is_process_alive(FlowMeterTyp)),
 	 ?_assert(erlang:is_process_alive(FlowMeterInst))].
 
-test_flowmeter_operation({PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid,Tasks})->
-	[PumpInst,PumpTypPID,FlowMeterInst,FlowMeterTyp] = Tasks,
-	?debugFmt("Testing flowmeter operation~n",[]),
-	?debugFmt("Pipes=~p~n",[Pipes]),
-	?debugFmt("Connectors=~p~n",[Connectors]),
-	?debugFmt("Locations=~p~n",[Locations]),
-	?debugFmt("FluidumTyp=~p~n",[FluidumType]),
-	?debugFmt("Fluid=~p~n",[Fluid]),
-	?debugFmt("PumpInst=~p~n",[PumpInst]),
-	?debugFmt("PumpTyp=~p~n",[PumpTypPID]),
-	?debugFmt("FlowMInst=~p~n",[FlowMeterInst]),
-	?debugFmt("FlowMTyp=~p~n",[FlowMeterTyp]),
+test_flowmeter_operation({_,Pipes,_,_,_,_,Tasks})->
+	[Pipe1,Pipe2,Pipe3] = Pipes,
+	[_,_,FlowMeterInst,_] = Tasks,
+	% ?debugFmt("Testing flowmeter operation~n",[]),
+	% ?debugFmt("Pipes=~p~n",[Pipes]),
+	% ?debugFmt("Connectors=~p~n",[Connectors]),
+	% ?debugFmt("Locations=~p~n",[Locations]),
+	% ?debugFmt("FluidumTyp=~p~n",[FluidumType]),
+	% ?debugFmt("Fluid=~p~n",[Fluid]),
+	% ?debugFmt("PumpInst=~p~n",[PumpInst]),
+	% ?debugFmt("PumpTyp=~p~n",[PumpTypPID]),
+	% ?debugFmt("FlowMInst=~p~n",[FlowMeterInst]),
+	% ?debugFmt("FlowMTyp=~p~n",[FlowMeterTyp]),
 	
 	%First test the real measurement value of the flow
-	{ok,RealMeasurement} = flowMeterInst:measure_flow(FlowMeterInst),
+	%?debugFmt("In between test ~p~n",[flowMeterInst:measure_flow(FlowMeterInst)]),
+	{ok,{ok,RealMeasurement}} = flowMeterInst:measure_flow(FlowMeterInst),
 	Test1 = ?_assertEqual(RealMeasurement,real_flow),
 
 	%Then test the estimation of the flow
-	?debugFmt("Now we will estimate the flow~n",[]),
+	%?debugFmt("Now we will estimate the flow~n",[]),
 	{ok,Flow} = flowMeterInst:estimate_flow(FlowMeterInst),
-	Test2 = ?_assertEqual(Flow,iest),
+	{ok,Fn1} = apply(resource_instance, get_flow_influence, [Pipe1]),
+	{ok,Fn2} = apply(resource_instance, get_flow_influence, [Pipe2]),
+	{ok,Fn3} = apply(resource_instance, get_flow_influence, [Pipe3]),
+	FluidumInfluenceFunctions = [Fn1, Fn2, Fn3],
+	RequiredFlow = compute({0,10},FluidumInfluenceFunctions),
+	Test2 = ?_assertEqual(Flow,RequiredFlow),
 	[Test1,Test2].
 
 test_heatex_basics({_,_,_,_,_,_,Tasks})->	
@@ -398,3 +414,29 @@ contains_el(El, [_A|Rest]) ->
 		
 contains_el(_El, []) ->
 	false.
+
+%Function to simulate the "estimate flow" calculations performed:
+compute({Low, High}, _InflFnCircuit) when (High - Low) < 1 -> 
+	%Todo convergentiewaarde instelbaar maken. 
+	(Low + High) / 2 ;
+	
+compute({Low, High}, InflFnCircuit) ->
+
+	L = eval(Low, InflFnCircuit, 0),
+	H = eval(High, InflFnCircuit, 0),
+	%?debugFmt("H1 is ~p~n",[H]),
+	L = eval(Low, InflFnCircuit, 0),
+	H = eval(High, InflFnCircuit, 0),
+	%?debugFmt("H2 is ~p~n",[H]),
+	Mid = (H + L) / 2, M = eval(Mid, InflFnCircuit, 0),
+	if 	M > 0 -> 
+			compute({Low, Mid}, InflFnCircuit);
+        true -> % works as an 'else' branch
+            compute({Mid, High}, InflFnCircuit)
+    end.
+
+	
+eval(Flow, [Fn | RemFn] , Acc) ->
+	eval(Flow, RemFn, Acc + Fn(Flow));
+
+eval(_Flow, [], Acc) -> Acc. 

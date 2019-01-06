@@ -28,17 +28,17 @@ handle_call({initial_state, [ResInst_Pid, TypeOptions], _Ref},_From,_State) ->
 			cList => [In, Out], typeOptions => TypeOptions},
 	{reply,Reply,[]};
 	
-handle_call({connections_list, State, _Ref},_From,_State) ->
-	#{cList := C_List} = State, 
+handle_call({connections_list, ConnectionsState, _Ref},_From,_State) ->
+	#{cList := C_List} = ConnectionsState, 
 	{reply,C_List, []};
 
-handle_call({flow_influence, _State, _Ref},_From,_State) ->
+handle_call({flow_influence, _, _Ref},_From,_State) ->
 	FlowInfluenceFn = fun(Flow) -> flow(Flow) end, % placeholder only. 
 	{reply,FlowInfluenceFn, []};
 
 
-handle_call({locations_list, State, _Ref}, _From,_State) ->
-	#{chambers := L_List} = State,
+handle_call({locations_list, PipeState, _Ref}, _From,_State) ->
+	#{chambers := L_List} = PipeState,
 	{reply, L_List, []}.
 		
 handle_cast(something,_State) ->
