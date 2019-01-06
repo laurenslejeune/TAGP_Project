@@ -1,5 +1,5 @@
 -module(flowMeterInst).
--export([create/4, init/4, estimate_flow/1, measure_flow/1]).
+-export([create/4, init/4, estimate_flow/1, estimate_flow/2, measure_flow/1]).
 % -export([commission/1, activate/1]).
 % -export([deactivate/1, decommission/1]).
 
@@ -19,6 +19,9 @@ init(Host, FlowMeterTyp_Pid, ResInst_Pid, RealWorldCmdFn) ->
 estimate_flow(FlowMeterInst_Pid) ->
 	msg:get(FlowMeterInst_Pid, estimate_flow). 
 
+estimate_flow(FlowMeterInst_Pid,Interval) ->
+	msg:get(FlowMeterInst_Pid, {estimate_flow,Interval}). 
+
 measure_flow(FlowMeterInst_Pid) ->
 	msg:get(FlowMeterInst_Pid, measure_flow).  
 
@@ -31,6 +34,10 @@ loop(Host, State, FlowMeterTyp_Pid, ResInst_Pid) ->
 			loop(Host, State, FlowMeterTyp_Pid, ResInst_Pid);
 		{estimate_flow, ReplyFn} ->
 			{ok, InfluenceFn} = msg:get(FlowMeterTyp_Pid, estimate_flow, State),
+			ReplyFn(InfluenceFn),
+			loop(Host, State, FlowMeterTyp_Pid, ResInst_Pid);
+		{{estimate_flow,Interval}, ReplyFn} ->
+			{ok, InfluenceFn} = msg:get(FlowMeterTyp_Pid, {estimate_flow,Interval}, State),
 			ReplyFn(InfluenceFn),
 			loop(Host, State, FlowMeterTyp_Pid, ResInst_Pid);
 		{get_type, ReplyFn} -> 

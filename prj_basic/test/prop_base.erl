@@ -4,12 +4,6 @@
 %%%%%%%%%%%%%%%%%%
 %%% Properties %%%
 %%%%%%%%%%%%%%%%%%
-% prop_test() ->
-%     ?FORALL(Type, term(),
-%         begin
-%             boolean(Type)
-%         end).
-
 prop_discover_circuit() ->
 	?FORALL(Int,integer(2,100),testFunctions:list_is_true(test_discover_circuit_N(Int))).
 
@@ -28,12 +22,14 @@ prop_test_flow_influence() ->
 	timer:send_after(1000,survivor,stop),
 	Result.
 
+
+prop_test_random_system() ->
+	true.
+%	?FORALL({N_pipes,N_pumps},{integer(3,20),integer(1,5)},true).
+
 %%%%%%%%%%%%%%%
 %%% Helpers %%%
 %%%%%%%%%%%%%%%
-boolean(_) -> true.
-
-
 test_discover_circuit_N(N) ->
 	if N >1 ->
 		%io:format("Creating circuit with ~p pipes...~n",[N]),
@@ -58,10 +54,3 @@ test_flow_influence(Flow)->
 	Influence2 = 250 - 5 * Flow - 2 * Flow * Flow,
 	%buildSystem:stop(),
 	Influence1 == Influence2.
-
-
-	
-%%%%%%%%%%%%%%%%%%
-%%% Generators %%%
-%%%%%%%%%%%%%%%%%%
-mytype() -> term().

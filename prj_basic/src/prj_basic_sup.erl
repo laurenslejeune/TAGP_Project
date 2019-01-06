@@ -31,7 +31,7 @@ start_link() ->
 %% Before OTP 18 tuples must be used to specify a child. e.g.
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
-    buildSystem:start_3pipes_water_pump_flowmeter(),
+    buildSystem:start_3pipes_water_pump_flowmeter(true),
     {ok, {{one_for_all, 0, 1}, []}}.
 
 %%====================================================================

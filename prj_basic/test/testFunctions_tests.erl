@@ -16,12 +16,17 @@ check_circuit_map_test_() ->
 	fun stop/1,
 	fun test_check_circuit_map/1}}.
 
-
+flowForBasicSituation_test_()->
+	{"Test if the flow, given a standard situation, for a given point in time, is correctly calculated",
+	{setup,
+	fun start/0,
+	fun stop/1,
+	fun test_flowForBasicSituation/0}}.
 
 start() ->
 	ok.
 
-stop(Iets) ->
+stop(_) ->
 	ok.
 
 test_list_is_true(ok) ->
@@ -47,3 +52,22 @@ test_check_circuit_map(ok) ->
 		 ?_assertEqual(true,Result3),
 		 ?_assertEqual(true,Result4),
 		 ?_assertEqual(true,Result5)].
+
+
+test_flowForBasicSituation()->
+	Test0 = ?_assertEqual(0,testFunctions:flowForBasicSituation(0)),
+	
+	Calculated1 = testFunctions:round(testFunctions:flowForBasicSituation(10),5),
+	Correct1 = testFunctions:round(1.453171752,5),
+	
+	Calculated2 = testFunctions:round(testFunctions:flowForBasicSituation(50),5),
+	Correct2= testFunctions:round(2.370520486,5),
+	
+	Calculated3 = testFunctions:round(testFunctions:flowForBasicSituation(100),5),
+	Correct3 = testFunctions:round(3.189435625,5),
+	
+	Calculated4 = testFunctions:round(testFunctions:flowForBasicSituation(200),5),
+	Correct4 = testFunctions:round(4.13720856,5),
+	
+	[?_assertEqual(Calculated1,Correct1),?_assertEqual(Calculated2,Correct2),
+	 ?_assertEqual(Calculated3,Correct3),?_assertEqual(Calculated4,Correct4)].
