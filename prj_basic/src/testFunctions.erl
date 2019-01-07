@@ -2,7 +2,7 @@
 -export([list_is_true/1,check_circuit_map/2]).
 -export([init/0]).
 -export([is_odd/1, is_even/1]).
--export([flowForBasicSituation/1]).
+-export([flowForBasicSituation/1,flowForAnySituation/3,flowForAnySituationWithPumpControl/4]).
 -export([round/2]).
 -include_lib("eunit/include/eunit.hrl").
 
@@ -55,6 +55,96 @@ flowForBasicSituation(Time,Flow)->
 	PumpForce = 250 -5*ActualFlow - 2*ActualFlow*ActualFlow,
 	NextFlow = 10 - ((-5/4) + math:sqrt(2025-8*PumpForce)/4),
 	flowForBasicSituation(Time-1,NextFlow).
+
+flowForAnySituation(0,_,_)->
+	0;
+
+flowForAnySituation(Time,N_pipes,N_pumps)->
+	Flow = 0,
+	Loss = getLoss(Flow,N_pipes),
+	ActualFlow = Flow + Loss,
+	PumpForce = (250 -5*ActualFlow - 2*ActualFlow*ActualFlow) * N_pumps,
+	NextFlow = N_pumps*10 - ((-5/4)+math:sqrt(2025-(8*PumpForce/N_pumps))/4),
+	flowForAnySituation(Time-1,N_pipes,N_pumps,NextFlow).
+
+flowForAnySituation(0,_,_,Flow)->
+	Flow;
+
+flowForAnySituation(Time,N_pipes,N_pumps,Flow)->
+	Loss = getLoss(Flow,N_pipes),
+	ActualFlow = Flow + Loss,
+	PumpForce = (250 -5*ActualFlow - 2*ActualFlow*ActualFlow) * N_pumps,
+	NextFlow = N_pumps*10 - ((-5/4)+math:sqrt(2025-(8*PumpForce/N_pumps))/4),
+	flowForAnySituation(Time-1,N_pipes,N_pumps,NextFlow).
+
+
+flowForAnySituationWithPumpControl(0,_,_,_)->
+	0;
+
+flowForAnySituationWithPumpControl(Time,N_pipes,N_pumps,{[{Counter,true}|Rest],Counter,_})->
+	Flow = 0,
+	Loss = getLoss(Flow,N_pipes),
+	ActualFlow = Flow + Loss,
+	PumpForce = (250 -5*ActualFlow - 2*ActualFlow*ActualFlow) * N_pumps,
+	NextFlow = N_pumps*10 - ((-5/4)+math:sqrt(2025-(8*PumpForce/N_pumps))/4),
+	flowForAnySituationWithPumpControl(Time-1,N_pipes,N_pumps,NextFlow,{Rest,Counter+1,true});
+
+flowForAnySituationWithPumpControl(Time,N_pipes,N_pumps,{[{Counter,false}|Rest],Counter,_})->
+	Flow = 0,
+	Loss = getLoss(Flow,N_pipes),
+	ActualFlow = Flow + Loss,
+	NextFlow = ActualFlow,
+	flowForAnySituationWithPumpControl(Time-1,N_pipes,N_pumps,NextFlow,{Rest,Counter+1,false});
+
+flowForAnySituationWithPumpControl(Time,N_pipes,N_pumps,{PumpControlList,Counter,true})->
+	Flow = 0,
+	Loss = getLoss(Flow,N_pipes),
+	ActualFlow = Flow + Loss,
+	PumpForce = (250 -5*ActualFlow - 2*ActualFlow*ActualFlow) * N_pumps,
+	NextFlow = N_pumps*10 - ((-5/4)+math:sqrt(2025-(8*PumpForce/N_pumps))/4),
+	flowForAnySituationWithPumpControl(Time-1,N_pipes,N_pumps,NextFlow,{PumpControlList,Counter+1,true});
+
+flowForAnySituationWithPumpControl(Time,N_pipes,N_pumps,{PumpControlList,Counter,false})->
+	Flow = 0,
+	Loss = getLoss(Flow,N_pipes),
+	ActualFlow = Flow + Loss,
+	NextFlow = ActualFlow,
+	flowForAnySituationWithPumpControl(Time-1,N_pipes,N_pumps,NextFlow,{PumpControlList,Counter+1,false}).
+
+flowForAnySituationWithPumpControl(0,_,_,Flow,_)->
+	Flow;
+
+flowForAnySituationWithPumpControl(Time,N_pipes,N_pumps,Flow,{[{Counter,true}|Rest],Counter,_})->
+	Loss = getLoss(Flow,N_pipes),
+	ActualFlow = Flow + Loss,
+	PumpForce = (250 -5*ActualFlow - 2*ActualFlow*ActualFlow) * N_pumps,
+	NextFlow = N_pumps*10 - ((-5/4)+math:sqrt(2025-(8*PumpForce/N_pumps))/4),
+	flowForAnySituationWithPumpControl(Time-1,N_pipes,N_pumps,NextFlow,{Rest,Counter+1,true});
+
+flowForAnySituationWithPumpControl(Time,N_pipes,N_pumps,Flow,{[{Counter,false}|Rest],Counter,_})->
+	Loss = getLoss(Flow,N_pipes),
+	ActualFlow = Flow + Loss,
+	NextFlow = ActualFlow,
+	flowForAnySituationWithPumpControl(Time-1,N_pipes,N_pumps,NextFlow,{Rest,Counter+1,false});
+
+flowForAnySituationWithPumpControl(Time,N_pipes,N_pumps,Flow,{PumpControlList,Counter,true})->
+	Loss = getLoss(Flow,N_pipes),
+	ActualFlow = Flow + Loss,
+	PumpForce = (250 -5*ActualFlow - 2*ActualFlow*ActualFlow) * N_pumps,
+	NextFlow = N_pumps*10 - ((-5/4)+math:sqrt(2025-(8*PumpForce/N_pumps))/4),
+	flowForAnySituationWithPumpControl(Time-1,N_pipes,N_pumps,NextFlow,{PumpControlList,Counter+1,true});
+
+flowForAnySituationWithPumpControl(Time,N_pipes,N_pumps,Flow,{PumpControlList,Counter,false})->
+	Loss = getLoss(Flow,N_pipes),
+	ActualFlow = Flow + Loss,
+	NextFlow = ActualFlow,
+	flowForAnySituationWithPumpControl(Time-1,N_pipes,N_pumps,NextFlow,{PumpControlList,Counter+1,false}).
+
+getLoss(Flow,_) when Flow < 1 ->
+	Flow/2;
+
+getLoss(Flow,N_pipes) ->
+	-0.01*N_pipes*Flow/4.
 
 getLoss(Flow) when Flow < 1 ->
 	Flow/2;

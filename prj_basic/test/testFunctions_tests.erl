@@ -23,6 +23,21 @@ flowForBasicSituation_test_()->
 	fun stop/1,
 	fun test_flowForBasicSituation/0}}.
 
+flowForAnySituation_test_()->
+	{"Test if the flow, given a situation with N1 pipes and N2 pumps, for a given point in time, is correctly calculated",
+	{setup,
+	fun start/0,
+	fun stop/1,
+	fun test_flowForAnySituation/0}}.
+
+flowForAnySituationWithPumpControl_test_()->
+	{"Test if the flow, given a situation with N1 pipes and N2 pumps, while turning the pump on and off,
+	 for a given point in time, is correctly calculated",
+	{setup,
+	fun start/0,
+	fun stop/1,
+	fun test_flowForAnySituationWithPumpControl/0}}.
+
 start() ->
 	ok.
 
@@ -69,5 +84,44 @@ test_flowForBasicSituation()->
 	Calculated4 = testFunctions:round(testFunctions:flowForBasicSituation(200),5),
 	Correct4 = testFunctions:round(4.13720856,5),
 	
-	[?_assertEqual(Calculated1,Correct1),?_assertEqual(Calculated2,Correct2),
+	[Test0,?_assertEqual(Calculated1,Correct1),?_assertEqual(Calculated2,Correct2),
+	 ?_assertEqual(Calculated3,Correct3),?_assertEqual(Calculated4,Correct4)].
+
+test_flowForAnySituation()->
+	Test0 = ?_assertEqual(0,testFunctions:flowForAnySituation(0)),
+	N_pipes = 50,
+	N_pumps = 3,
+	Calculated1 = testFunctions:round(testFunctions:flowForAnySituation(10,N_pipes,N_pumps),5),
+	Correct1 = testFunctions:round(10.31694193,5),
+	
+	Calculated2 = testFunctions:round(testFunctions:flowForAnySituation(50,N_pipes,N_pumps),5),
+	Correct2= testFunctions:round(13.9823587,5),
+	
+	Calculated3 = testFunctions:round(testFunctions:flowForAnySituation(100,N_pipes,N_pumps),5),
+	Correct3 = testFunctions:round(13.99997777,5),
+	
+	Calculated4 = testFunctions:round(testFunctions:flowForAnySituation(15,N_pipes,N_pumps),5),
+	Correct4 = testFunctions:round(15.88907339,5),
+	
+	[Test0,?_assertEqual(Calculated1,Correct1),?_assertEqual(Calculated2,Correct2),
+	 ?_assertEqual(Calculated3,Correct3),?_assertEqual(Calculated4,Correct4)].
+
+test_flowForAnySituationWithPumpControl()->
+	Test0 = ?_assertEqual(0,testFunctions:flowForAnySituationWithPumpControl(0)),
+	N_pipes = 50,
+	N_pumps = 3,
+	PumpControlList = {[{0,true},{40,false},{90,true}],0,true},
+	Calculated1 = testFunctions:round(testFunctions:flowForAnySituationWithPumpControl(10,N_pipes,N_pumps,PumpControlList),5),
+	Correct1 = testFunctions:round(21.1807251,5),
+	
+	Calculated2 = testFunctions:round(testFunctions:flowForAnySituationWithPumpControl(50,N_pipes,N_pumps,PumpControlList),5),
+	Correct2= testFunctions:round(1.906714696,5),
+	
+	Calculated3 = testFunctions:round(testFunctions:flowForAnySituationWithPumpControl(100,N_pipes,N_pumps,PumpControlList),5),
+	Correct3 = testFunctions:round(10.66633457,5),
+	
+	Calculated4 = testFunctions:round(testFunctions:flowForAnySituationWithPumpControl(200,N_pipes,N_pumps,PumpControlList),5),
+	Correct4 = testFunctions:round(13.99999471,5),
+	
+	[Test0,?_assertEqual(Calculated1,Correct1),?_assertEqual(Calculated2,Correct2),
 	 ?_assertEqual(Calculated3,Correct3),?_assertEqual(Calculated4,Correct4)].

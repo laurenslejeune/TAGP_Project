@@ -24,8 +24,11 @@ prop_test_flow_influence() ->
 
 
 prop_test_random_system() ->
+	%There cannot be more heat exchangers or pumps than pipes in the system
 	true.
-%	?FORALL({N_pipes,N_pumps},{integer(3,20),integer(1,5)},true).
+	%?FORALL({N_pipes,N_pumps,N_he},{integer(3,20),integer(1,N_pipes),integer(1,N_pipes)},true).
+
+
 
 %%%%%%%%%%%%%%%
 %%% Helpers %%%
