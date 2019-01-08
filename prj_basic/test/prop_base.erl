@@ -29,13 +29,18 @@ prop_test_random_system_pump_always_on() ->
 	%There cannot be more heat exchangers or pumps than pipes in the system
 	?FORALL({N_pipes,N_pumps,N_he},{integer(5,20),integer(1,5),integer(1,5)},test_random_system_always_on(N_pipes,N_pumps,N_he)).
 
+prop_test_random_system_pump_switched_off() ->
+	?FORALL({N_pipes,N_pumps,N_he},{integer(5,20),integer(1,5),integer(1,5)},test_random_system_switched_off(N_pipes,N_pumps,N_he)).
+
+prop_test_random_system_pump_switched_on() ->
+	?FORALL({N_pipes,N_pumps,N_he},{integer(5,20),integer(1,5),integer(1,5)},test_random_system_switched_on(N_pipes,N_pumps,N_he)).
+
 prop_test_random_system_pump_random_on() ->
 	%% Test a randomly generated system, with all randomly on or off
 	%% Whenever a pump is turned on, there is an 80% chance it remains turned on
 	%% Whenever a pump is turned off, there is an 80% chance it remains turned off
 	%There cannot be more heat exchangers or pumps than pipes in the system
-	true.
-	%?FORALL({N_pipes,N_pumps,N_he},{integer(3,20),integer(1,N_pipes),integer(1,N_pipes)},true).
+	?FORALL({N_pipes,N_pumps,N_he},{integer(5,20),integer(1,5),integer(1,5)},test_random_system_random_on(N_pipes,N_pumps,N_he)).
 
 %%%%%%%%%%%%%%%
 %%% Helpers %%%
@@ -66,7 +71,7 @@ test_flow_influence(Flow)->
 	Influence1 == Influence2.
 
 test_random_system_always_on(N_pipes,N_pumps,N_he)->
-	{Pipes,Pumps,FlowMeter,HeatExchangers} = buildSystem:generateRandomSystem(N_pipes,N_pumps,N_he,true),
+	{_,Pumps,FlowMeter,_} = buildSystem:generateRandomSystem(N_pipes,N_pumps,N_he,true),
 	switchOnAllPumps(Pumps),
 	{ok, GetSystemFlowPid} = getSystemFlow:create(),
     {ok,SystemFlowPid} = systemFlow:create(Pumps,FlowMeter,GetSystemFlowPid),
@@ -81,93 +86,94 @@ test_random_system_always_on(N_pipes,N_pumps,N_he)->
     getSystemFlow:stopSystemFlow(GetSystemFlowPid),
 	Result.
 
-test_random_system_random_on(N_pipes,N_pumps,N_he)->
-	{Pipes,Pumps,FlowMeter,HeatExchangers} = buildSystem:generateRandomSystem(N_pipes,N_pumps,N_he,true),
-	[Pump1|_] = Pumps,
+test_random_system_switched_off(N_pipes,N_pumps,N_he)->
+	{_,Pumps,FlowMeter,_} = buildSystem:generateRandomSystem(N_pipes,N_pumps,N_he,true),
+	%io:format("Testing randomly generated system with ~p pipes, ~p pumps and ~p heat exchangers~n",[N_pipes,N_pumps,N_he]),
 	switchOnAllPumps(Pumps),
 	{ok, GetSystemFlowPid} = getSystemFlow:create(),
     {ok,SystemFlowPid} = systemFlow:create(Pumps,FlowMeter,GetSystemFlowPid),
 
 
-	SwitchingList = [{0,true}],
-	%%Now there are 4 moments where there is a chance the status of the pump (on/off) will be flipped
-	timer:sleep(rand:uniform(25)),
-	%There is a 30% that the pump will be toggled on/off
-	RandomNumber0 = (1.0-rand:uniform()),
-	if(RandomNumber0>=0.7)->
-		{ok,OnOff0} = pumpInst:is_on(Pump1),
-		{ok,{N0,_}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
-		if(OnOff0==on) ->
-			SwitchingList++[{N0,false}],
-			switchOffAllPumps(Pumps);
-		true->
-			SwitchingList++[{N0,true}],
-			switchOnAllPumps(Pumps)
-		end;
-	true ->
-		ok
-	end,
+	
+	%%Now, after a random time, the pump is switched off
+	timer:sleep(rand:uniform(50)+10),
+	{ok,{_,OldFlow}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
+	switchOffAllPumps(Pumps),
+	% TimingInformation = {[{0,true},{N0,false}],0,true},
+	% io:format("Received ~p, Timing information:~p~n",[{N0,MeasuredFlow},TimingInformation]),
+	timer:sleep(rand:uniform(50)+10),
 
-	timer:sleep(rand:uniform(25)),
-	%There is a 30% that the pump will be toggled on/off
-	RandomNumber1 = (1.0-rand:uniform()),
-	if(RandomNumber1>=0.7)->
-		{ok,OnOff1} = pumpInst:is_on(Pump1),
-		{ok,{N1,_}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
-		if(OnOff1==on) ->
-			SwitchingList++[{N1,false}],
-			switchOffAllPumps(Pumps);
-		true->
-			SwitchingList++[{N1,true}],
-			switchOnAllPumps(Pumps)
-		end;
-	true ->
-		ok
-	end,
+	
+	{ok,{N,Flow}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
+	%CorrectFlow = testFunctions:flowForAnySituationWithPumpControl(N,N_pipes,N_pumps,TimingInformation),
+	%io:format("N:~p| ~p pipes, ~p pump(s), Flow = ~p, CorrectFlow = ~p|~n",[N,N_pipes,N_pumps,Flow,CorrectFlow]),
+	%io:format("Old ~p, New ~p~n",[OldFlow,Flow]),
+	Result = (OldFlow>Flow),
+	
+	SystemFlowPid ! stop,
+    getSystemFlow:stopSystemFlow(GetSystemFlowPid),
+	Result.
 
-	timer:sleep(rand:uniform(25)),
-	%There is a 30% that the pump will be toggled on/off
-	RandomNumber2 = (1.0-rand:uniform()),
-	if(RandomNumber2>=0.7)->
-		{ok,OnOff2} = pumpInst:is_on(Pump1),
-		{ok,{N2,_}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
-		if(OnOff2==on) ->
-			SwitchingList++[{N2,false}],
-			switchOffAllPumps(Pumps);
-		true->
-			SwitchingList++[{N2,true}],
-			switchOnAllPumps(Pumps)
-		end;
-	true ->
-		ok
-	end,
+test_random_system_switched_on(N_pipes,N_pumps,N_he)->
+	{_,Pumps,FlowMeter,_} = buildSystem:generateRandomSystem(N_pipes,N_pumps,N_he,true),
+	%io:format("Testing randomly generated system with ~p pipes, ~p pumps and ~p heat exchangers~n",[N_pipes,N_pumps,N_he]),
+	{ok, GetSystemFlowPid} = getSystemFlow:create(),
+    {ok,SystemFlowPid} = systemFlow:create(Pumps,FlowMeter,GetSystemFlowPid),
 
-	timer:sleep(rand:uniform(25)),
-	%There is a 30% that the pump will be toggled on/off
-	RandomNumber3 = (1.0-rand:uniform()),
-	if(RandomNumber3>=0.7)->
-		{ok,OnOff3} = pumpInst:is_on(Pump1),
-		{ok,{N3,_}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
-		if(OnOff3==on) ->
-			SwitchingList++[{N3,false}],
-			switchOffAllPumps(Pumps);
-		true->
-			SwitchingList++[{N3,true}],
-			switchOnAllPumps(Pumps)
-		end;
-	true ->
-		ok
-	end,
 
-	TimingInformation = {SwitchingList,0,true},
+	
+	%%Now, after a random time, the pump is switched off
+	timer:sleep(rand:uniform(50)),
+	{ok,{N0,_}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
+	switchOnAllPumps(Pumps),
+	timer:sleep(rand:uniform(50)),
+	TimingInformation = {[{0,false},{N0,true}],0,false},
+	%io:format("Timing information:~p~n",[TimingInformation]),
 	{ok,{N,Flow}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
 	CorrectFlow = testFunctions:flowForAnySituationWithPumpControl(N,N_pipes,N_pumps,TimingInformation),
-	%io:format("N:~p| ~p pipes, ~p pumps, Flow = ~p, CorrectFlow = ~p~n",[N,N_pipes,N_pumps,Flow,CorrectFlow]),
+	%io:format("N:~p| ~p pipes, ~p pump(s), Flow = ~p, CorrectFlow = ~p|~n",[N,N_pipes,N_pumps,Flow,CorrectFlow]),
 	Result = (abs(CorrectFlow-Flow)<1),
 	
 	SystemFlowPid ! stop,
     getSystemFlow:stopSystemFlow(GetSystemFlowPid),
 	Result.
+
+test_random_system_random_on(N_pipes,N_pumps,N_he)->
+	{_,Pumps,FlowMeter,_} = buildSystem:generateRandomSystem(N_pipes,N_pumps,N_he,true),
+	%io:format("Testing randomly generated system with ~p pipes, ~p pumps and ~p heat exchangers~n",[N_pipes,N_pumps,N_he]),
+	[Pump1|_] = Pumps,
+	
+	%Randomly decide whether the pumps are initially turned on
+	RandomNumber = (1.0-rand:uniform()),
+	if(RandomNumber > 0.5) ->
+		InitialState = true,
+		SwitchingListInit = [{0,true}],
+		switchOnAllPumps(Pumps);
+	true ->
+		InitialState = false,
+		SwitchingListInit = [{0,false}]
+	end,
+	{ok, GetSystemFlowPid} = getSystemFlow:create(),
+    {ok,SystemFlowPid} = systemFlow:create(Pumps,FlowMeter,GetSystemFlowPid),
+
+	%First, randomly decide on the number of times the state will be toggled:
+	NumberOfSwitches = rand:uniform(5)-1, %random integer between 0 and 4
+
+	%Perform switching and construct switching list:
+	RequiredTime = rand:uniform(20),
+	{SwitchingList,FlowList} = switch(Pump1,Pumps,NumberOfSwitches,RequiredTime,SwitchingListInit,GetSystemFlowPid,[]),
+	
+	
+	TimingInformation = {SwitchingList,0,InitialState},
+	%io:format("SwitchingList = ~p~n",[SwitchingList]),
+	{ok,{N,Flow}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
+	CorrectFlow = testFunctions:flowForAnySituationWithPumpControl(N,N_pipes,N_pumps,TimingInformation),
+	%io:format("N:~p| ~p pipes, ~p pump(s), Flow = ~p, CorrectFlow = ~p|~n",[N,N_pipes,N_pumps,Flow,CorrectFlow]),
+	_ = (abs(CorrectFlow-Flow)<1),
+	
+	SystemFlowPid ! stop,
+    getSystemFlow:stopSystemFlow(GetSystemFlowPid),
+	true.
 
 switchOnAllPumps([Pump])->
 	pumpInst:switch_on(Pump);
@@ -181,4 +187,26 @@ switchOffAllPumps([Pump])->
 
 switchOffAllPumps([Pump|OtherPumps])->
 	pumpInst:switch_off(Pump),
-	switchOnAllPumps(OtherPumps).
+	switchOffAllPumps(OtherPumps).
+
+switch(_,_,0,_,SwitchingList,_,FlowList)->
+	{SwitchingList,FlowList};
+
+switch(SamplePump,Pumps,NumberOfSwitches,RequiredTime,SwitchingList,GetSystemFlowPid,FlowList)->
+	{ok,{N,Flow}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
+	if (N>=RequiredTime)->
+		%%Switch and update switching list
+		{ok,OnOff} = pumpInst:is_on(SamplePump),
+		if(OnOff == on)->
+			NewSwitchingList = SwitchingList ++ [{N,false}],
+			switchOffAllPumps(Pumps);
+		true->
+			NewSwitchingList = SwitchingList ++ [{N,true}],
+			switchOnAllPumps(Pumps)
+		end,
+		%Generate new Required Time
+		NewRequiredTime = N + rand:uniform(20),
+		switch(SamplePump,Pumps,NumberOfSwitches-1,NewRequiredTime,NewSwitchingList,GetSystemFlowPid,FlowList++[Flow]);
+	true->
+		switch(SamplePump,Pumps,NumberOfSwitches,RequiredTime,SwitchingList,GetSystemFlowPid,FlowList)
+	end.

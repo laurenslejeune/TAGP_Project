@@ -429,7 +429,7 @@ test_fully_integrated_system({PipeTypePID,Pipes,Connectors,Locations,FluidumType
 	pumpInst:switch_on(PumpInst),
 	%Initialize the process monitoring the flow
 	{ok, GetSystemFlowPid} = getSystemFlow:create(),
-    {ok,SystemFlowPid} = systemFlow:create([PumpInst],FlowMeterInst,GetSystemFlowPid),
+    {ok,_} = systemFlow:create([PumpInst],FlowMeterInst,GetSystemFlowPid),
 	%Test if flow estimations are correct, based on the calculations in the .xlsx file
 	{ok,{N1,Flow1}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
 	Test1 = ?_assertEqual(Flow1,testFunctions:flowForBasicSituation(N1)),
@@ -444,7 +444,7 @@ test_fully_integrated_system({PipeTypePID,Pipes,Connectors,Locations,FluidumType
 	Test4 = ?_assertEqual(Flow4,testFunctions:flowForBasicSituation(N4)),
 	%
 	%?debugFmt("Simulation testvalue ~p~n",[simulation:simulateFlow(FlowMeterInst,PumpInst)]),
-	TestList1++TestList2++TestList3++TestList4++[Test1,Test2,Test3,Test4].
+	TestList1++TestList2++TestList3++TestList4++TestList5++[Test1,Test2,Test3,Test4].
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%% HELPER FUNCTIONS %%%
