@@ -42,6 +42,9 @@ prop_test_random_system_pump_random_on() ->
 	%There cannot be more heat exchangers or pumps than pipes in the system
 	?FORALL({N_pipes,N_pumps,N_he},{integer(5,20),integer(1,5),integer(1,5)},test_random_system_random_on(N_pipes,N_pumps,N_he)).
 
+prop_test_digital_twin_generation()->
+	?FORALL({N_pipes,N_pumps,N_he},{integer(5,20),integer(1,5),integer(1,5)},test_digital_twin_generation(N_pipes,N_pumps,N_he)).
+
 %%%%%%%%%%%%%%%
 %%% Helpers %%%
 %%%%%%%%%%%%%%%
@@ -104,7 +107,7 @@ test_random_system_switched_off(N_pipes,N_pumps,N_he)->
 	timer:sleep(rand:uniform(50)+10),
 
 	
-	{ok,{N,Flow}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
+	{ok,{_N,Flow}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
 	%CorrectFlow = testFunctions:flowForAnySituationWithPumpControl(N,N_pipes,N_pumps,TimingInformation),
 	%io:format("N:~p| ~p pipes, ~p pump(s), Flow = ~p, CorrectFlow = ~p|~n",[N,N_pipes,N_pumps,Flow,CorrectFlow]),
 	%io:format("Old ~p, New ~p~n",[OldFlow,Flow]),
@@ -161,7 +164,7 @@ test_random_system_random_on(N_pipes,N_pumps,N_he)->
 
 	%Perform switching and construct switching list:
 	RequiredTime = rand:uniform(20),
-	{SwitchingList,FlowList} = switch(Pump1,Pumps,NumberOfSwitches,RequiredTime,SwitchingListInit,GetSystemFlowPid,[]),
+	{SwitchingList,_FlowList} = switch(Pump1,Pumps,NumberOfSwitches,RequiredTime,SwitchingListInit,GetSystemFlowPid,[]),
 	
 	
 	TimingInformation = {SwitchingList,0,InitialState},
@@ -174,6 +177,67 @@ test_random_system_random_on(N_pipes,N_pumps,N_he)->
 	SystemFlowPid ! stop,
     getSystemFlow:stopSystemFlow(GetSystemFlowPid),
 	true.
+
+test_digital_twin_generation(N_pipes,N_pumps,N_Hex)->
+	survivor:start(),
+	{Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1} = buildSystem:generateRandomSystem(N_pipes,N_pumps,N_Hex,false),
+	{ok, GetSystemFlowPid1} = getSystemFlow:create(),
+    {ok,SystemFlowPid1} = systemFlow:create(Pumps1,FlowMeterInst1,GetSystemFlowPid1),
+
+	{Pipes2,Pumps2,FlowMeterInst2,HeatExchangers2} = buildSystem:generateDigitalTwin({Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1,GetSystemFlowPid1}),
+	{ok, GetSystemFlowPid2} = getSystemFlow:create(),
+    {ok,SystemFlowPid2} = systemFlow:create(Pumps2,FlowMeterInst2,GetSystemFlowPid2),
+
+	%% First test: Assert that the number of pipes, pumps and heat exchangers is the same:
+	Condition1 = length(Pipes1)==length(Pipes2),
+	Condition2 = length(Pumps1)==length(Pumps2),
+	Condition3 = length(HeatExchangers1)==length(HeatExchangers2),
+	%io:format("Conditions 1,2,3 are ~p, ~p and ~p~n",[Condition1,Condition2,Condition3]),
+	Check1 = (Condition1 == true) and (Condition2 == true) and (Condition3==true),
+	
+	%% Second test: Check that both systems give a flow of 0 when all pumps are turned off:
+	{ok,{_,FlowOff1}} = getSystemFlow:getSystemFlow(GetSystemFlowPid1),
+	{ok,{_,FlowOff2}} = getSystemFlow:getSystemFlow(GetSystemFlowPid2),
+	Condition4 = (FlowOff1 == FlowOff2) and (FlowOff1 == 0),
+	Check2 = Check1 and Condition4,
+
+	%% Third test: Check that, if the twin turns on its pumps, the original system follows:
+	switchOnAllPumps(Pumps2),
+	%Wait a little while to be sure that all switching signals are handled correctly
+	timer:sleep(1),
+	Condition5 = areSwitchedOn(Pumps1),
+	Check3 = Check2 and Condition5,
+
+	timer:sleep(2),
+	% Fourth test: Check that the digital twin can ask for the real flow of the original twin
+	{ok, {_,RealFlow1}} = getSystemFlow:getSystemFlow(GetSystemFlowPid1),
+	{ok, {_,RealFlow2}} = flowMeterInst:measure_flow(FlowMeterInst2),
+	%io:format("Comparing flows: ~p ~p~n",[RealFlow1,RealFlow2]),
+	
+	if((RealFlow1==RealFlow2) == false) ->
+		%Sometimes a little extra delay is necessary to account for the discrepancy in startup time
+		timer:sleep(1),
+		{ok, {_,RealFlow3}} = getSystemFlow:getSystemFlow(GetSystemFlowPid1),
+		{ok, {_,RealFlow4}} = flowMeterInst:measure_flow(FlowMeterInst2),
+		Condition6 = (RealFlow3==RealFlow4);
+	true->
+		Condition6 = (RealFlow1==RealFlow2)
+	end,
+	Check4 = Check3 and Condition6,
+	
+
+	%Fifth test: Heat exchangement
+	
+
+	%Correctly terminate running processes
+	SystemFlowPid1 ! stop,
+	SystemFlowPid2 ! stop,
+	getSystemFlow:stopSystemFlow(GetSystemFlowPid1),
+	getSystemFlow:stopSystemFlow(GetSystemFlowPid2),
+	survivor ! stop,
+
+	%Return value is test result
+	Check4.
 
 switchOnAllPumps([Pump])->
 	pumpInst:switch_on(Pump);
@@ -188,6 +252,22 @@ switchOffAllPumps([Pump])->
 switchOffAllPumps([Pump|OtherPumps])->
 	pumpInst:switch_off(Pump),
 	switchOffAllPumps(OtherPumps).
+
+areSwitchedOn([Pump])->
+	{ok,OnOff} = pumpInst:is_on(Pump),
+	if(OnOff==off)->
+		false;
+	true->
+		true
+	end;
+
+areSwitchedOn([Pump|Pumps])->
+	{ok,OnOff} = pumpInst:is_on(Pump),
+	if(OnOff==off)->
+		false;
+	true->
+		areSwitchedOn(Pumps)
+	end.
 
 switch(_,_,0,_,SwitchingList,_,FlowList)->
 	{SwitchingList,FlowList};
