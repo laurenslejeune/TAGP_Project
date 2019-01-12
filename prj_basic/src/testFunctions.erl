@@ -10,6 +10,7 @@
 init() ->
 	ok.
 
+-spec list_is_true(list(boolean())) -> boolean().
 list_is_true([true|Acc]) ->
 	list_is_true(Acc);
 	
@@ -30,9 +31,11 @@ check_circuit_map([C1|OtherC],CircuitMap, Checks) ->
 check_circuit_map([],_CircuitMap, Checks) ->
 	Checks.
 
+-spec is_odd(number())->boolean().
 is_odd(Number) ->
 	(Number rem 2) /= 0.
 
+-spec is_even(number())->boolean().
 is_even(Number) ->
 	(Number rem 2) == 0.
 
@@ -159,6 +162,7 @@ round(Number, Precision) ->
     P = math:pow(10, Precision),
     round(Number * P) / P.
 
+-spec generateDifList(pos_integer(),list()) -> list().
 generateDifList(1,DifList)->
     RandomDif = rand:uniform(3)-2,
     DifList++[RandomDif];

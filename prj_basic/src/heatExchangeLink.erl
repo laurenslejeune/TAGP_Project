@@ -11,7 +11,8 @@
 
 get_temp_influence(HE_link_spec) ->
     %Original code:
-    {ok, fun(Flow, InTemp) -> #{delta := Difference} = HE_link_spec, {ok, InTemp + (Difference/(Flow+?EPS))} end}.
+    {ok, fun(   0, InTemp) -> #{delta := Difference} = HE_link_spec, {ok, InTemp + (Difference*?EPS)};
+            (Flow, InTemp) -> #{delta := Difference} = HE_link_spec, {ok, InTemp + (Difference/(Flow+?EPS))} end}.
     
 
     %Added additional safety: The temperature cannot exceed 100, or subceed 0 degrees celcius

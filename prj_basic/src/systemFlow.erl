@@ -103,10 +103,10 @@ areAllPumpsOff([P|Pumps]) ->
         false
     end.
 
-pumpsOnOff([P],List)->
-    {ok,OnOff} = pumpInst:is_on(P),
-    List++[OnOff];
+% pumpsOnOff([P],List)->
+%     {ok,OnOff} = pumpInst:is_on(P),
+%     List++[OnOff];
 
-pumpsOnOff([P|Pumps],List)->
-    {ok,OnOff} = pumpInst:is_on(P),
-    pumpsOnOff(Pumps,List++[OnOff]).
+% pumpsOnOff([P|Pumps],List)->
+%     {ok,OnOff} = pumpInst:is_on(P),
+%     pumpsOnOff(Pumps,List++[OnOff]).

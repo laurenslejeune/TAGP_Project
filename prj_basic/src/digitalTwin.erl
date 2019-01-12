@@ -5,6 +5,7 @@
 -export([getDigitalTwinData/0,stopDigitalTwin/0]).
 -export([startPumps/0,stopPumps/0]).
 
+-spec create(pos_integer(),pos_integer(),pos_integer())-> tuple().
 %In this implementation, a pump can also be an heat-exchangers and vice-versa
 create(N_pipes, N_pumps, N_Hex) when (N_pumps > N_pipes) or (N_Hex > N_pipes)->
     {error,too_many_pums_and_hex};
@@ -35,6 +36,8 @@ init({N_pipes, N_pumps, N_Hex})->
     {ok, SystemTempPid2} = systemTemp:create(HeatExchangers2,GetSystemFlowPid2,GetSystemTempPid2),
     getSystemTemp:setSystemTempDelay(SystemTempPid2,1000),
     System2 = {{Pipes2,Pumps2,FlowMeterInst2,HeatExchangers2},{GetSystemFlowPid2,GetSystemTempPid2},{SystemFlowPid2,SystemTempPid2}},
+
+    collectData:create(SystemFlowPid1,SystemFlowPid2,SystemTempPid1,SystemTempPid2,10),
 
     loop({System1,System2}).
 
