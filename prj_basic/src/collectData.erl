@@ -10,7 +10,7 @@ init({GetSystemFlow1,GetSystemFlow2,GetSystemTemp1,GetSystemTemp2,Delay})->
     loop({GetSystemFlow1,GetSystemFlow2,GetSystemTemp1,GetSystemTemp2,0,Delay}).
 
 loop({GetSystemFlow1,GetSystemFlow2,GetSystemTemp1,GetSystemTemp2,N,Delay})->
-    if(N<1000)->
+    if(N<10000)->
         %{ok,{_,Flow1}} = getSystemFlow:getSystemFlow(GetSystemFlow1),
         %{ok,{_,Flow2}} = getSystemFlow:getSystemFlow(GetSystemFlow2),
         %{ok,{_,Temp1}} = getSystemTemp:getSystemTemp(GetSystemTemp1),

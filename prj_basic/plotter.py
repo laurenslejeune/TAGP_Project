@@ -35,15 +35,28 @@ def maxInList(List):
             currentMax = el
     return currentMax
 
+def minInList(List):
+    currentMin = 100000000000000
+    for el in List:
+        if (el<currentMin):
+            currentMin = el
+    return currentMin
+
 print(len(flow1))
-time = [tick*60/1000 for tick in range(0,1000)] #Time in seconds
+time = [tick*60/len(flow1) for tick in range(0,len(flow1))] #Time in seconds
 
 plt.figure(1)
-plt.subplot(211)
-plt.plot(time,flow1,'ro',time,flow2,'b--')
-plt.axis([0,60,0,max(1.1*maxInList(flow1),1.1*maxInList(flow2))])
+plt.subplot(121)
+plt.plot(time,flow1,'ro',time,flow2,'b-')
+plt.axis([0,60,min(1.1*minInList(flow1),1.1*minInList(flow2)),max(1.1*maxInList(flow1),1.1*maxInList(flow2))])
+plt.xlabel('Time (s)')
+plt.ylabel('Flow')
+plt.title('Flow in function of the time',fontsize=12)
 
-plt.subplot(212)
-plt.plot(time,temp1,'ro',time,temp2,'b--')
-plt.axis([0,60,0,max(1.1*maxInList(temp1),1.1*maxInList(temp2))])
+plt.subplot(122)
+plt.plot(time,temp1,'ro',time,temp2,'b-')
+plt.axis([0,60,min(1.1*minInList(temp1),1.1*minInList(temp2)),max(1.1*maxInList(temp1),1.1*maxInList(temp2))])
+plt.title('Temperature in function of the time',fontsize=12)
+plt.xlabel('Time (s)')
+plt.ylabel('Temperatur (°C)')
 plt.show()

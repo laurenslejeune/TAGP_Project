@@ -22,22 +22,22 @@ init({N_pipes, N_pumps, N_Hex})->
     {Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1} = buildSystem:generateRandomSystem(N_pipes,N_pumps,N_Hex,false,DifList),
 	{ok, GetSystemFlowPid1} = getSystemFlow:create(),
     {ok,SystemFlowPid1} = systemFlow:create(Pumps1,FlowMeterInst1,GetSystemFlowPid1),
-	getSystemFlow:setSystemFlowDelay(SystemFlowPid1,800),
+	getSystemFlow:setSystemFlowDelay(SystemFlowPid1,100),
     {ok, GetSystemTempPid1} = getSystemTemp:create(),
     {ok, SystemTempPid1} = systemTemp:create(HeatExchangers1,GetSystemFlowPid1,GetSystemTempPid1),
-    getSystemTemp:setSystemTempDelay(SystemTempPid1,1000),
+    getSystemTemp:setSystemTempDelay(SystemTempPid1,120),
     System1 = {{Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1},{GetSystemFlowPid1,GetSystemTempPid1},{SystemFlowPid1,SystemTempPid1}},
 
 	{Pipes2,Pumps2,FlowMeterInst2,HeatExchangers2} = buildSystem:generateDigitalTwin({Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1,GetSystemFlowPid1,DifList}),
 	{ok, GetSystemFlowPid2} = getSystemFlow:create(),
     {ok,SystemFlowPid2} = systemFlow:create(Pumps2,FlowMeterInst2,GetSystemFlowPid2),
-	getSystemFlow:setSystemFlowDelay(SystemFlowPid2,800),
+	getSystemFlow:setSystemFlowDelay(SystemFlowPid2,100),
     {ok, GetSystemTempPid2} = getSystemTemp:create(),
     {ok, SystemTempPid2} = systemTemp:create(HeatExchangers2,GetSystemFlowPid2,GetSystemTempPid2),
-    getSystemTemp:setSystemTempDelay(SystemTempPid2,1000),
+    getSystemTemp:setSystemTempDelay(SystemTempPid2,120),
     System2 = {{Pipes2,Pumps2,FlowMeterInst2,HeatExchangers2},{GetSystemFlowPid2,GetSystemTempPid2},{SystemFlowPid2,SystemTempPid2}},
 
-    collectData:create(SystemFlowPid1,SystemFlowPid2,SystemTempPid1,SystemTempPid2,60),
+    collectData:create(SystemFlowPid1,SystemFlowPid2,SystemTempPid1,SystemTempPid2,6),
 
     loop({System1,System2}).
 
