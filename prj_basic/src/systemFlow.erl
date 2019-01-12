@@ -8,14 +8,17 @@ create(ListOfPumpInstances,FlowMeter,RegisterPid)->
 init({ListOfPumpInstances,FlowMeter,RegisterPid}) ->
     survivor:entry(systemFlow_created),
     RegisterPid ! {new_flow,{0,0}},
-    loop({ListOfPumpInstances,FlowMeter,0,0,RegisterPid}).
+    loop({ListOfPumpInstances,FlowMeter,0,0,RegisterPid,1}).
 
-loop({ListOfPumpInstances,FlowMeter,Time,CurrentFlow,RegisterPid})->
+loop({ListOfPumpInstances,FlowMeter,Time,CurrentFlow,RegisterPid,Delay})->
     
     receive
-        stop -> ok
+        stop -> 
+            ok;
+        {change_delay,NewDelay} ->
+            loop({ListOfPumpInstances,FlowMeter,Time,CurrentFlow,RegisterPid,NewDelay})
         %We calculate the current flow every 1ms
-        after 1 ->
+        after Delay ->
             %CurrentPumpForce = getCurrentPumpForce(CurrentFlow,),
             %Calculate the influence of the pipes on the current flow
             PipeInfluence = getPipeInfluence(CurrentFlow,FlowMeter),
@@ -36,18 +39,9 @@ loop({ListOfPumpInstances,FlowMeter,Time,CurrentFlow,RegisterPid})->
             %Store the new flow
             RegisterPid ! {new_flow,{Time+1,NewFlow}},
 
-            loop({ListOfPumpInstances,FlowMeter,Time+1,NewFlow,RegisterPid})
+            loop({ListOfPumpInstances,FlowMeter,Time+1,NewFlow,RegisterPid,Delay})
     end.
 
-getCurrentPumpForce(Flow,[NextPump|Others],Force) ->
-    %Get the flow influence for this pump
-    {ok,InfluenceFn} = pumpInst:flow_influence(NextPump),
-    %Calculate the force corresponding this influence
-    AdditionalForce = InfluenceFn(Flow),
-    getCurrentPumpForce(Flow,Others,Force+AdditionalForce);
-
-getCurrentPumpForce(_,[],Force)->
-    Force.
 
 
 getNewFlow(Flow,[NextPump|Others],NewFlow,MaxForce) ->

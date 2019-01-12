@@ -33,6 +33,8 @@ start_link() ->
 init([]) ->
     %buildSystem:start_3pipes_water_pump_flowmeter(true),
     observer:start(),
+    survivor:start(),
+    
     {ok, {{one_for_all, 0, 1}, []}}.
 
 %%====================================================================

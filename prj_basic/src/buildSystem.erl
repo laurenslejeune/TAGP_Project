@@ -3,7 +3,7 @@
 -export([start_3pipes_water_pump_flowmeter/1,start_3pipes_water_pump_flowmeter_heatex/1]).
 -export([start_Npipes_circle/1]).
 -export([connectPipesCircle/1, generateNpipes/3, getAllConnectors/1]).
--export([generateRandomSystem/4,generateDigitalTwin/1]).
+-export([generateRandomSystem/4,generateRandomSystem/5,generateDigitalTwin/1]).
 -include_lib("eunit/include/eunit.hrl").
 
 
@@ -616,7 +616,97 @@ generateRandomSystem(N_pipes,N_pumps,N_he,false)->
 	HeatExchangers = generateNHeatExchangers(N_he,HeatExTyp,Pipes),
 	{Pipes,Pumps,FlowMeterInst,HeatExchangers}.
 
-generateDigitalTwin({RefPipes,RefPumps,RefFlowMeter,RefHeatExchangers,RefGetSystemFlowPid})->
+generateRandomSystem(N_pipes,N_pumps,N_he,false,DifList)->
+	{ok,PipeTypePID} = resource_type:create(pipeTyp,[]),
+	%First generate the N required pipes
+	Pipes = generateNpipes(N_pipes,[],PipeTypePID),
+	
+	%Next, connect those pipes
+	%The pipes will be connected in one, large circle
+	ok = connectPipesCircle(Pipes),
+
+	%We then put water in the network (in all the pipes)
+	FluidumType = fluidumTyp:create(),
+	
+	[RandomPipe|_] = Pipes,
+	{ok,[Connector,_]} = resource_instance:list_connectors(RandomPipe),
+	{ok, Fluid} = fluidumInst:create(Connector,FluidumType),
+	fillPipesWithFluid(Pipes,Fluid),
+
+	%Next, the required pumps are generated
+	%Create a pump type
+	{ok,PumpTypPID} = pumpTyp:create(),
+	%Instantiate the real world command function
+	Fun = fun(on) ->
+			{ok,on};
+			(off)->
+			{ok,off}
+		end,
+	%Now create the actual pumps:
+	Pumps = generateNPumps(N_pumps,PumpTypPID,Fun,Pipes),
+	%io:format("Generated list of pumps ~p~n",[Pumps]),
+	%We create a single flowmeter
+	{ok, FlowMeterTyp} = flowMeterTyp:create(),
+	FlowMeterCMD = fun()->
+					{ok,real_flow}
+				end,
+	%Select a random pipe to put the flowmeter on:
+	RandomIndex = rand:uniform(length(Pipes)), %Provides an integer between 1 and length(Pipes)
+	RandomPipe2 = lists:nth(RandomIndex,Pipes),
+	{ok, FlowMeterInst} = flowMeterInst:create(self(),FlowMeterTyp,RandomPipe2, FlowMeterCMD),
+
+	%Finally, generate the N_he heat exchangers
+	{ok, HeatExTyp} = heatExchangerTyp:create(),
+	HeatExchangers = generateNHeatExchangersWithDifList(N_he,HeatExTyp,Pipes,DifList),
+	{Pipes,Pumps,FlowMeterInst,HeatExchangers};
+
+generateRandomSystem(N_pipes,N_pumps,N_he,true,DifList)->
+	survivor:start(),
+
+	{ok,PipeTypePID} = resource_type:create(pipeTyp,[]),
+	%First generate the N required pipes
+	Pipes = generateNpipes(N_pipes,[],PipeTypePID),
+	
+	%Next, connect those pipes
+	%The pipes will be connected in one, large circle
+	ok = connectPipesCircle(Pipes),
+
+	%We then put water in the network (in all the pipes)
+	FluidumType = fluidumTyp:create(),
+	
+	[RandomPipe|_] = Pipes,
+	{ok,[Connector,_]} = resource_instance:list_connectors(RandomPipe),
+	{ok, Fluid} = fluidumInst:create(Connector,FluidumType),
+	fillPipesWithFluid(Pipes,Fluid),
+
+	%Next, the required pumps are generated
+	%Create a pump type
+	{ok,PumpTypPID} = pumpTyp:create(),
+	%Instantiate the real world command function
+	Fun = fun(on) ->
+			{ok,on};
+			(off)->
+			{ok,off}
+		end,
+	%Now create the actual pumps:
+	Pumps = generateNPumps(N_pumps,PumpTypPID,Fun,Pipes),
+	%io:format("Generated list of pumps ~p~n",[Pumps]),
+	%We create a single flowmeter
+	{ok, FlowMeterTyp} = flowMeterTyp:create(),
+	FlowMeterCMD = fun()->
+					{ok,real_flow}
+				end,
+	%Select a random pipe to put the flowmeter on:
+	RandomIndex = rand:uniform(length(Pipes)), %Provides an integer between 1 and length(Pipes)
+	RandomPipe2 = lists:nth(RandomIndex,Pipes),
+	{ok, FlowMeterInst} = flowMeterInst:create(self(),FlowMeterTyp,RandomPipe2, FlowMeterCMD),
+
+	%Finally, generate the N_he heat exchangers
+	{ok, HeatExTyp} = heatExchangerTyp:create(),
+	HeatExchangers = generateNHeatExchangersWithDifList(N_he,HeatExTyp,Pipes,DifList),
+	{Pipes,Pumps,FlowMeterInst,HeatExchangers}.
+
+generateDigitalTwin({RefPipes,RefPumps,RefFlowMeter,RefHeatExchangers,RefGetSystemFlowPid,DifList})->
 	%In order to accurately represent the system, the structure needs to exactly the same as the given on:
 
 	%First, generate lists with pumps/heat exhangers on the same index as the pipe they represent:
@@ -659,7 +749,7 @@ generateDigitalTwin({RefPipes,RefPumps,RefFlowMeter,RefHeatExchangers,RefGetSyst
 
 	%Finally, generate the N_he heat exchangers
 	{ok, HeatExTyp} = heatExchangerTyp:create(),
-	HeatExchangers = generateNHeatExchangers(length(RefHeatExchangers),HeatExTyp,Pipes),
+	HeatExchangers = generateNHeatExchangersWithDifList(length(RefHeatExchangers),HeatExTyp,Pipes,DifList),
 	{Pipes,Pumps,FlowMeterInst,HeatExchangers}.
 
 stop() ->
@@ -729,6 +819,24 @@ generateNPumpsDigitalTwin(N,PumpTypPID,[RefPump|RefPumps],Pumps,Pipes)->
 	%Remove the pipe from the list, so it cannot be chosen again
 	lists:delete(RandomPipe,Pipes),
 	generateNPumpsDigitalTwin(N-1,PumpTypPID,RefPumps,Pumps++[PumpInst],Pipes).
+
+generateNHeatExchangersWithDifList(N_he,HeatExTyp,Pipes,DifList)->
+	generateNHeatExchangersWithDifList(N_he,HeatExTyp,Pipes,DifList,[]).
+
+generateNHeatExchangersWithDifList(0,_,_,_,HE) ->
+	HE;
+
+generateNHeatExchangersWithDifList(N_he,HeatExTyp,Pipes,[Dif|DifList],HE)->
+	HE_link_spec = #{delta => Dif},
+
+	RandomIndex = rand:uniform(length(Pipes)), %Provides an integer between 1 and length(Pipes)
+	RandomPipe = lists:nth(RandomIndex,Pipes),
+
+	{ok, HeatEx} = heatExchangerInst:create(self(), HeatExTyp, RandomPipe, HE_link_spec),
+
+	lists:delete(RandomPipe,Pipes),
+	generateNHeatExchangersWithDifList(N_he-1,HeatExTyp,Pipes,DifList,HE++[HeatEx]).
+
 
 
 generateNHeatExchangers(N,HeatExTyp,Pipes)->

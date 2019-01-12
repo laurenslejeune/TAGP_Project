@@ -1,6 +1,6 @@
 -module(getSystemFlow).
 -export([create/0,init/0]).
--export([getSystemFlow/1,stopSystemFlow/1]).
+-export([getSystemFlow/1,stopSystemFlow/1,setSystemFlowDelay/2]).
 
 create() ->
     {ok,spawn(?MODULE,init,[])}.
@@ -20,6 +20,9 @@ loop(Flow)->
         {stop,ReplyFn} ->
             ReplyFn(ok)            
     end.
+
+setSystemFlowDelay(Pid,NewDelay)->
+    Pid ! {change_delay,NewDelay}.
 
 getSystemFlow(Pid)->
     %io:format("required process exists ~p, getSystemFlow ",[erlang:is_process_alive(Pid)]),

@@ -1,5 +1,6 @@
 -module(prop_base).
 -include_lib("proper/include/proper.hrl").
+-export([switchOnAllPumps/1]).
 
 %%%%%%%%%%%%%%%%%%
 %%% Properties %%%
@@ -127,16 +128,17 @@ test_random_system_switched_on(N_pipes,N_pumps,N_he)->
 	
 	%%Now, after a random time, the pump is switched off
 	timer:sleep(rand:uniform(50)),
-	{ok,{N0,_}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
+	{ok,{_,OldFlow}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
 	switchOnAllPumps(Pumps),
 	timer:sleep(rand:uniform(50)),
-	TimingInformation = {[{0,false},{N0,true}],0,false},
+	{ok,{_,Flow}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
+	%TimingInformation = {[{0,false},{N0,true}],0,false},
 	%io:format("Timing information:~p~n",[TimingInformation]),
-	{ok,{N,Flow}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
-	CorrectFlow = testFunctions:flowForAnySituationWithPumpControl(N,N_pipes,N_pumps,TimingInformation),
+	%{ok,{N,Flow}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
+	%CorrectFlow = testFunctions:flowForAnySituationWithPumpControl(N,N_pipes,N_pumps,TimingInformation),
 	%io:format("N:~p| ~p pipes, ~p pump(s), Flow = ~p, CorrectFlow = ~p|~n",[N,N_pipes,N_pumps,Flow,CorrectFlow]),
-	Result = (abs(CorrectFlow-Flow)<1),
-	
+	%Result = (abs(CorrectFlow-Flow)<1),
+	Result = (OldFlow < Flow),
 	SystemFlowPid ! stop,
     getSystemFlow:stopSystemFlow(GetSystemFlowPid),
 	Result.
@@ -180,13 +182,19 @@ test_random_system_random_on(N_pipes,N_pumps,N_he)->
 
 test_digital_twin_generation(N_pipes,N_pumps,N_Hex)->
 	survivor:start(),
-	{Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1} = buildSystem:generateRandomSystem(N_pipes,N_pumps,N_Hex,false),
+	DifList = testFunctions:generateDifList(N_Hex,[]),
+	{Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1} = buildSystem:generateRandomSystem(N_pipes,N_pumps,N_Hex,false,DifList),
 	{ok, GetSystemFlowPid1} = getSystemFlow:create(),
     {ok,SystemFlowPid1} = systemFlow:create(Pumps1,FlowMeterInst1,GetSystemFlowPid1),
+	{ok, GetSystemTempPid1} = getSystemTemp:create(),
+    {ok, SystemTempPid1} = systemTemp:create(HeatExchangers1,GetSystemFlowPid1,GetSystemTempPid1),
 
-	{Pipes2,Pumps2,FlowMeterInst2,HeatExchangers2} = buildSystem:generateDigitalTwin({Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1,GetSystemFlowPid1}),
+	{Pipes2,Pumps2,FlowMeterInst2,HeatExchangers2} = buildSystem:generateDigitalTwin({Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1,GetSystemFlowPid1,DifList}),
 	{ok, GetSystemFlowPid2} = getSystemFlow:create(),
     {ok,SystemFlowPid2} = systemFlow:create(Pumps2,FlowMeterInst2,GetSystemFlowPid2),
+	{ok, GetSystemTempPid2} = getSystemTemp:create(),
+    {ok, SystemTempPid2} = systemTemp:create(HeatExchangers2,GetSystemFlowPid2,GetSystemTempPid2),
+
 
 	%% First test: Assert that the number of pipes, pumps and heat exchangers is the same:
 	Condition1 = length(Pipes1)==length(Pipes2),
@@ -226,18 +234,36 @@ test_digital_twin_generation(N_pipes,N_pumps,N_Hex)->
 	Check4 = Check3 and Condition6,
 	
 
-	%Fifth test: Heat exchangement
+	%% Fifth test: Heat exchangement
+	%Test that the temperature of the systems either increases or decreases after some delay,
+	%but that the trend is equal for both systems
+	{ok,{_,TempA1}} = getSystemTemp:getSystemTemp(GetSystemTempPid1),
+	{ok,{_,TempB1}} = getSystemTemp:getSystemTemp(GetSystemTempPid2),
+	timer:sleep(40),
+	{ok,{_,TempA2}} = getSystemTemp:getSystemTemp(GetSystemTempPid1),
+	{ok,{_,TempB2}} = getSystemTemp:getSystemTemp(GetSystemTempPid2),
 	
-
+	if(TempA1 >= TempA2) ->
+		Condition7 = (TempB1 >= TempB2);
+	true ->
+		Condition7 = (TempB1 < TempB2)
+	end,
+	%io:format("(~p -> ~p and ~p -> ~p)~n",[TempA1,TempA2,TempB1,TempB2]),
+	Check5 = Check4 and Condition7,
 	%Correctly terminate running processes
 	SystemFlowPid1 ! stop,
 	SystemFlowPid2 ! stop,
 	getSystemFlow:stopSystemFlow(GetSystemFlowPid1),
 	getSystemFlow:stopSystemFlow(GetSystemFlowPid2),
+	SystemTempPid1 ! stop,
+	SystemTempPid2 ! stop,
+	getSystemTemp:stopSystemTemp(GetSystemTempPid1),
+	getSystemTemp:stopSystemTemp(GetSystemTempPid2),
 	survivor ! stop,
 
 	%Return value is test result
-	Check4.
+	%If all test succeeded, the digital twin is correctly constructed
+	Check5.
 
 switchOnAllPumps([Pump])->
 	pumpInst:switch_on(Pump);
@@ -290,3 +316,4 @@ switch(SamplePump,Pumps,NumberOfSwitches,RequiredTime,SwitchingList,GetSystemFlo
 	true->
 		switch(SamplePump,Pumps,NumberOfSwitches,RequiredTime,SwitchingList,GetSystemFlowPid,FlowList)
 	end.
+

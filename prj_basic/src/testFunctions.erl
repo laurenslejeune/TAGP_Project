@@ -4,6 +4,7 @@
 -export([is_odd/1, is_even/1]).
 -export([flowForBasicSituation/1,flowForAnySituation/3,flowForAnySituationWithPumpControl/4]).
 -export([round/2]).
+-export([generateDifList/2]).
 -include_lib("eunit/include/eunit.hrl").
 
 init() ->
@@ -157,3 +158,11 @@ round(Number, Precision) ->
 	%Source:http://www.codecodex.com/wiki/Round_a_number_to_a_specific_decimal_place#Erlang
     P = math:pow(10, Precision),
     round(Number * P) / P.
+
+generateDifList(1,DifList)->
+    RandomDif = rand:uniform(3)-2,
+    DifList++[RandomDif];
+
+generateDifList(N,DifList)->
+    RandomDif = rand:uniform(3)-2, %Generates random number in range [-1;1]
+    generateDifList(N-1,DifList++[RandomDif]).
