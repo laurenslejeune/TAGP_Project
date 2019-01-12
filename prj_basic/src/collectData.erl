@@ -28,7 +28,9 @@ loop({GetSystemFlow1,GetSystemFlow2,GetSystemTemp1,GetSystemTemp2,N,Delay})->
 storeData(N)->
     {ok,File}=file:open("data.csv",write),
     writeLine(N,0,File),
-    file:close(File).
+    file:close(File),
+    io:format("Data has been stored to file data.csv~n",[]),
+    ets:delete(stored_data).
 
 writeLine(N,CurrentN,File) when N==(CurrentN+1)->
     [{CurrentN,{GetSystemFlow1,GetSystemFlow2,GetSystemTemp1,GetSystemTemp2}}]=ets:lookup(stored_data,CurrentN),
