@@ -15,6 +15,7 @@ loop({ListOfHeatEx,GetSystemFlowPid,Time,CurrentTemp,RegisterPid,Delay})->
         stop ->
             ok;
         {change_delay,NewDelay} ->
+            io:format("Switched temp update delay to ~p~n",[NewDelay]),
             loop({ListOfHeatEx,GetSystemFlowPid,Time,CurrentTemp,RegisterPid,NewDelay})
     after Delay ->
         {ok,{_,Flow}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),

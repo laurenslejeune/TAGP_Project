@@ -16,6 +16,7 @@ loop({ListOfPumpInstances,FlowMeter,Time,CurrentFlow,RegisterPid,Delay})->
         stop -> 
             ok;
         {change_delay,NewDelay} ->
+            io:format("Switched flow update delay to ~p~n",[NewDelay]),
             loop({ListOfPumpInstances,FlowMeter,Time,CurrentFlow,RegisterPid,NewDelay})
         %We calculate the current flow every 1ms
         after Delay ->

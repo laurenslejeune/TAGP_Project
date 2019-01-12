@@ -1,6 +1,6 @@
 -module(prop_base).
 -include_lib("proper/include/proper.hrl").
--export([switchOnAllPumps/1]).
+-export([switchOnAllPumps/1, switchOffAllPumps/1]).
 
 %%%%%%%%%%%%%%%%%%
 %%% Properties %%%

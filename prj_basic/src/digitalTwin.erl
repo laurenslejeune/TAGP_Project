@@ -3,6 +3,7 @@
 -export([create/3]).
 -export([init/1]).
 -export([getDigitalTwinData/0,stopDigitalTwin/0]).
+-export([startPumps/0,stopPumps/0]).
 
 %In this implementation, a pump can also be an heat-exchangers and vice-versa
 create(N_pipes, N_pumps, N_Hex) when (N_pumps > N_pipes) or (N_Hex > N_pipes)->
@@ -20,19 +21,19 @@ init({N_pipes, N_pumps, N_Hex})->
     {Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1} = buildSystem:generateRandomSystem(N_pipes,N_pumps,N_Hex,false,DifList),
 	{ok, GetSystemFlowPid1} = getSystemFlow:create(),
     {ok,SystemFlowPid1} = systemFlow:create(Pumps1,FlowMeterInst1,GetSystemFlowPid1),
-	getSystemFlow:setSystemFlowDelay(GetSystemFlowPid1,800),
+	getSystemFlow:setSystemFlowDelay(SystemFlowPid1,800),
     {ok, GetSystemTempPid1} = getSystemTemp:create(),
     {ok, SystemTempPid1} = systemTemp:create(HeatExchangers1,GetSystemFlowPid1,GetSystemTempPid1),
-    getSystemTemp:setSystemTempDelay(GetSystemTempPid1,1000),
+    getSystemTemp:setSystemTempDelay(SystemTempPid1,1000),
     System1 = {{Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1},{GetSystemFlowPid1,GetSystemTempPid1},{SystemFlowPid1,SystemTempPid1}},
 
 	{Pipes2,Pumps2,FlowMeterInst2,HeatExchangers2} = buildSystem:generateDigitalTwin({Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1,GetSystemFlowPid1,DifList}),
 	{ok, GetSystemFlowPid2} = getSystemFlow:create(),
     {ok,SystemFlowPid2} = systemFlow:create(Pumps2,FlowMeterInst2,GetSystemFlowPid2),
-	getSystemFlow:setSystemFlowDelay(GetSystemFlowPid2,800),
+	getSystemFlow:setSystemFlowDelay(SystemFlowPid2,800),
     {ok, GetSystemTempPid2} = getSystemTemp:create(),
     {ok, SystemTempPid2} = systemTemp:create(HeatExchangers2,GetSystemFlowPid2,GetSystemTempPid2),
-    getSystemTemp:setSystemTempDelay(GetSystemTempPid2,1000),
+    getSystemTemp:setSystemTempDelay(SystemTempPid2,1000),
     System2 = {{Pipes2,Pumps2,FlowMeterInst2,HeatExchangers2},{GetSystemFlowPid2,GetSystemTempPid2},{SystemFlowPid2,SystemTempPid2}},
 
     loop({System1,System2}).
@@ -49,7 +50,13 @@ loop({{{Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1},{GetSystemFlowPid1,GetSyst
             loop({{{Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1},{GetSystemFlowPid1,GetSystemTempPid1},{SystemFlowPid1,SystemTempPid1}},
                 {{Pipes2,Pumps2,FlowMeterInst2,HeatExchangers2},{GetSystemFlowPid2,GetSystemTempPid2},{SystemFlowPid2,SystemTempPid2}}});
         start_pumps ->
-            prop_base:switchOnAllPumps(Pumps2);
+            switchOnAllPumps(Pumps2),
+            loop({{{Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1},{GetSystemFlowPid1,GetSystemTempPid1},{SystemFlowPid1,SystemTempPid1}},
+                {{Pipes2,Pumps2,FlowMeterInst2,HeatExchangers2},{GetSystemFlowPid2,GetSystemTempPid2},{SystemFlowPid2,SystemTempPid2}}});
+        stop_pumps ->
+            switchOffAllPumps(Pumps2),
+            loop({{{Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1},{GetSystemFlowPid1,GetSystemTempPid1},{SystemFlowPid1,SystemTempPid1}},
+                {{Pipes2,Pumps2,FlowMeterInst2,HeatExchangers2},{GetSystemFlowPid2,GetSystemTempPid2},{SystemFlowPid2,SystemTempPid2}}});
         stop ->
             SystemFlowPid1 ! stop,
             SystemFlowPid2 ! stop,
@@ -64,8 +71,25 @@ loop({{{Pipes1,Pumps1,FlowMeterInst1,HeatExchangers1},{GetSystemFlowPid1,GetSyst
 startPumps()->
     digital_twin ! start_pumps.
 
+stopPumps()->
+    digital_twin ! stop_pumps.
+
 getDigitalTwinData()->
     msg:get(digital_twin,get_data).
 
 stopDigitalTwin()->
     digital_twin ! stop.
+
+switchOnAllPumps([Pump])->
+	pumpInst:switch_on(Pump);
+
+switchOnAllPumps([Pump|OtherPumps])->
+	pumpInst:switch_on(Pump),
+	switchOnAllPumps(OtherPumps).
+
+switchOffAllPumps([Pump])->
+	pumpInst:switch_off(Pump);
+
+switchOffAllPumps([Pump|OtherPumps])->
+	pumpInst:switch_off(Pump),
+	switchOffAllPumps(OtherPumps).
