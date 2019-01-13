@@ -21,7 +21,7 @@ check_circuit_map_test_() ->
 start() ->
 	ok.
 
-stop(Iets) ->
+stop(_) ->
 	ok.
 
 test_list_is_true(ok) ->

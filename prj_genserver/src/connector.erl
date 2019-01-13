@@ -34,7 +34,7 @@ get_type(Connector_Pid) ->
 	msg:get(Connector_Pid, get_type ).
 		
 discard(Connector_Pid) -> 
-	gen_server:terminate(Connector_Pid).
+	gen_server:stop(Connector_Pid).
 	%Connector_Pid ! discard. 
 	
 test() -> 

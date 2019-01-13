@@ -37,7 +37,7 @@ init({N_pipes, N_pumps, N_Hex})->
     getSystemTemp:setSystemTempDelay(SystemTempPid2,120),
     System2 = {{Pipes2,Pumps2,FlowMeterInst2,HeatExchangers2},{GetSystemFlowPid2,GetSystemTempPid2},{SystemFlowPid2,SystemTempPid2}},
 
-    collectData:create(SystemFlowPid1,SystemFlowPid2,SystemTempPid1,SystemTempPid2,6),
+    collectData:create(6),
 
     loop({System1,System2}).
 

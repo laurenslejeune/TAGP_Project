@@ -6,10 +6,11 @@ create(Delay) ->
 
 init({Delay})->
     ets:new(stored_data, [named_table, ordered_set, public]),
-    %io:format("Created stored__data table~n",[]),
+    io:format("Created stored__data table~n",[]),
     loop({0,Delay}).
 
 loop({N,Delay})->
+    %io:format("~p~n",[N]),
     if(N<10000)->
         %{ok,{_,Flow1}} = getSystemFlow:getSystemFlow(GetSystemFlow1),
         %{ok,{_,Flow2}} = getSystemFlow:getSystemFlow(GetSystemFlow2),
@@ -22,6 +23,7 @@ loop({N,Delay})->
         timer:sleep(Delay),
         loop({N+1,Delay});
     true->
+        %io:format("Stopping with ~p~n",[N]),
         storeData(N)
     end.
 

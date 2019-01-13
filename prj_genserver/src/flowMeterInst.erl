@@ -1,6 +1,6 @@
 -module(flowMeterInst).
 -behaviour(gen_server).
--export([create/4, init/1, estimate_flow/1, measure_flow/1]).
+-export([create/4, init/1, estimate_flow/1, estimate_flow/2, measure_flow/1]).
 -export([handle_call/3, handle_cast/2]).
 % -export([commission/1, activate/1]).
 % -export([deactivate/1, decommission/1]).
@@ -24,7 +24,10 @@ handle_cast(_,State)->
 	{noreply,State}.
 
 estimate_flow(FlowMeterInst_Pid) ->
-	msg:get(FlowMeterInst_Pid, estimate_flow). 
+	msg:get(FlowMeterInst_Pid, estimate_flow).
+
+estimate_flow(FlowMeterInst_Pid,Interval) ->
+	msg:get(FlowMeterInst_Pid, {estimate_flow,Interval}).
 
 measure_flow(FlowMeterInst_Pid) ->
 	msg:get(FlowMeterInst_Pid, measure_flow).  
@@ -35,6 +38,10 @@ handle_call({measure_flow,_Ref},_From,{Host, State, FlowMeterTyp_Pid, ResInst_Pi
 
 handle_call({estimate_flow,_Ref},_From,{Host, State, FlowMeterTyp_Pid, ResInst_Pid})->
 	{ok, InfluenceFn} = msg:get(FlowMeterTyp_Pid, estimate_flow, State),
+	{reply,InfluenceFn,{Host, State, FlowMeterTyp_Pid, ResInst_Pid}};
+
+handle_call({{estimate_flow,Interval},_Ref},_From,{Host, State, FlowMeterTyp_Pid, ResInst_Pid})->
+	{ok, InfluenceFn} = msg:get(FlowMeterTyp_Pid, {estimate_flow,Interval}, State),
 	{reply,InfluenceFn,{Host, State, FlowMeterTyp_Pid, ResInst_Pid}};
 
 handle_call({get_type,_Ref},_From,{Host, State, FlowMeterTyp_Pid, ResInst_Pid})->

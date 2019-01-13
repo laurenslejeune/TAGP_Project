@@ -19,7 +19,7 @@ init([]) ->
 handle_call({initial_state, [MeterInst_Pid, [ResInst_Pid, RealWorldCmdFn]],_Ref},_From,[])->
 	{ok, [L | _ ] } = resource_instance:list_locations(ResInst_Pid),
 	{ok, Fluidum} = location:get_Visitor(L),
-	?debugFmt("FLuiduim is ~p~n",[Fluidum]),
+	%?debugFmt("FLuiduim is ~p~n",[Fluidum]),
 	State = #{meterInst => MeterInst_Pid, resInst => ResInst_Pid, fluidum => Fluidum, rw_cmd => RealWorldCmdFn},
 	{reply,State,[]};
 
@@ -32,6 +32,11 @@ handle_call({estimate_flow,State,_Ref},_From,[])->
 	{ok, C} = fluidumInst:get_resource_circuit(F),
 	{reply,computeFlow(C),[]};
 
+handle_call({{estimate_flow,Interval},State,_Ref},_From,[])->
+	#{fluidum := F} = State,
+	{ok, C} = fluidumInst:get_resource_circuit(F),
+	{reply,computeFlow(C,Interval),[]};
+
 handle_call({isOn,State,_Ref},_From,[])->
 	#{on_or_off := OnOrOff} = State,
 	{reply,OnOrOff,[]}.
@@ -41,6 +46,13 @@ handle_cast(_,[])->
 
 computeFlow(ResCircuit) -> 
  	Interval = {0, 10}, % ToDo >> discover upper bound for flow.
+	%Remark:
+	%maps:next(maps:iterator(ResCircuit)) takes the first Key-Value pair
+	%in the newly created iterator
+	{ok, InfluenceFnCircuit} = influence(maps:next(maps:iterator(ResCircuit)), []),
+	compute(Interval, InfluenceFnCircuit).
+
+computeFlow(ResCircuit,Interval) -> 
 	%Remark:
 	%maps:next(maps:iterator(ResCircuit)) takes the first Key-Value pair
 	%in the newly created iterator

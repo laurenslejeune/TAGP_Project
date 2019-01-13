@@ -739,8 +739,8 @@ generateDigitalTwin({RefPipes,RefPumps,RefFlowMeter,RefHeatExchangers,RefGetSyst
 	%We create a single flowmeter
 	{ok, FlowMeterTyp} = flowMeterTyp:create(),
 	FlowMeterCMD = fun()->
-					{ok,{_,Flow}} = getSystemFlow:getSystemFlow(RefGetSystemFlowPid),
-					{ok,Flow}
+					{ok,{N,Flow}} = getSystemFlow:getSystemFlow(RefGetSystemFlowPid),
+					{N,Flow}
 				end,
 	%Select a random pipe to put the flowmeter on:
 	RandomIndex = rand:uniform(length(Pipes)), %Provides an integer between 1 and length(Pipes)

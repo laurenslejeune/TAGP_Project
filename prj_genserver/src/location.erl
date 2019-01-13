@@ -26,7 +26,7 @@ departure(Location_Pid) ->
 	gen_server:cast(Location_Pid,departed).
 
 dispose(Location_Pid) ->
-	gen_server:terminate(Location_Pid).
+	gen_server:stop(Location_Pid).
 
 handle_call({get_ResInst, _Ref},_From,{ResInst_Pid, LocationTyp_Pid, Visitor_Pid}) ->
 	{reply,ResInst_Pid,{ResInst_Pid, LocationTyp_Pid, Visitor_Pid}};

@@ -205,19 +205,28 @@ test_digital_twin_generation(N_pipes,N_pumps,N_Hex)->
 
 	timer:sleep(2),
 	% Fourth test: Check that the digital twin can ask for the real flow of the original twin
-	{ok, {_,RealFlow1}} = getSystemFlow:getSystemFlow(GetSystemFlowPid1),
-	{ok, {_,RealFlow2}} = flowMeterInst:measure_flow(FlowMeterInst2),
-	%io:format("Comparing flows: ~p ~p~n",[RealFlow1,RealFlow2]),
+	{ok, {N1,RealFlow1A}} = getSystemFlow:getSystemFlow(GetSystemFlowPid1),
+	{ok, {N2,RealFlow2A}} = flowMeterInst:measure_flow(FlowMeterInst2),
+
+	%To account for any transients, the next values are asked as well
+	%If any of the following Dif-values are (nearly) equal, we can assume the twins are working correctly
+	RealFlow1B = waitUntil(N1+1,GetSystemFlowPid1),
+	RealFlow2B = waitUntil(N2+1,GetSystemFlowPid2),
+	Dif1 = abs(RealFlow1A - RealFlow2A),
+	Dif2 = abs(RealFlow1B - RealFlow2A),
+	Dif3 = abs(RealFlow1A - RealFlow2B),
+
+	Condition6 = (Dif1<0.1)or(Dif2<0.1)or(Dif3<0.1),
 	
-	if((RealFlow1==RealFlow2) == false) ->
-		%Sometimes a little extra delay is necessary to account for the discrepancy in startup time
-		timer:sleep(1),
-		{ok, {_,RealFlow3}} = getSystemFlow:getSystemFlow(GetSystemFlowPid1),
-		{ok, {_,RealFlow4}} = flowMeterInst:measure_flow(FlowMeterInst2),
-		Condition6 = (RealFlow3==RealFlow4);
-	true->
-		Condition6 = (RealFlow1==RealFlow2)
-	end,
+	% if((RealFlow1==RealFlow2) == false) ->
+	% 	%Sometimes a little extra delay is necessary to account for the discrepancy in startup time
+	% 	timer:sleep(1),
+	% 	{ok, {_,RealFlow3}} = getSystemFlow:getSystemFlow(GetSystemFlowPid1),
+	% 	{ok, {_,RealFlow4}} = flowMeterInst:measure_flow(FlowMeterInst2),
+	% 	Condition6 = (RealFlow3==RealFlow4);
+	% true->
+	% 	Condition6 = (RealFlow1==RealFlow2)
+	% end,
 	Check4 = Check3 and Condition6,
 	
 
@@ -283,6 +292,17 @@ areSwitchedOn([Pump|Pumps])->
 		false;
 	true->
 		areSwitchedOn(Pumps)
+	end.
+
+waitUntil(N,GetSystemFlowPid)->
+	{ok,{N_currently,Flow}} = getSystemFlow:getSystemFlow(GetSystemFlowPid),
+	if
+		(N_currently == N) ->
+			Flow;
+		(N_currently > N) ->
+			error;
+		true ->
+			waitUntil(N,GetSystemFlowPid)
 	end.
 
 % switch(_,_,0,_,SwitchingList,_,FlowList)->

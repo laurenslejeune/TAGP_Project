@@ -4,8 +4,6 @@
 -export([contains_el/2]).
 -export([contains/4]).
 
-%%BELANGRIJK: ZORG ERVOOR DAT DE SURVIVOR AF TE SLUITEN IS!%%
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% TESTS DESCRIPTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -56,47 +54,64 @@ fluidum_basic_test() ->
 	fun stop_survivor/1,
 	[fun test_fluidum_basics/1,fun test_fluidum_operations/1]}}.
 
+% fluidum_operations_test() ->
+% 	{"Check the basic operations of the fluidum modules",
+% 	{setup,
+% 	fun start_3pipes_water/0,
+% 	fun stop_survivor/1,
+% 	fun test_fluidum_operations/1}}.
+
 pump_basic_test_()->
-	{"Test the basics of creating a pump in a system.",
-	{setup,
+	{"1) Test the basics of creating a pump in a system.
+	  2) Test the basics of operating a pump in a system",
+	{foreach,
 	fun start_3pipes_water_pump/0,
 	fun stop/1,
-	fun test_pump_basics/1}}.
+	[fun test_pump_basics/1,fun test_pump_operation/1]}}.
 	
-pump_operation_test_()->
-	{"Test the basics of operating a pump in a system.",
-	{setup,
-	fun start_3pipes_water_pump/0,
-	fun stop/1,
-	fun test_pump_operation/1}}.
+% pump_operation_test_()->
+% 	{"Test the basics of operating a pump in a system.",
+% 	{setup,
+% 	fun start_3pipes_water_pump/0,
+% 	fun stop/1,
+% 	fun test_pump_operation/1}}.
 
 flowmeter_basic_test_()->
-	{"Test the basics of creating a flowmeter in a system.",
-	{setup,
+	{"1) Test the basics of creating a flowmeter in a system.
+	  2) Test the basics of operating a flowmeter in a system.",
+	{foreach,
 	fun start_3pipes_water_pump_flowmeter/0,
 	fun stop/1,
-	fun test_flowmeter_basics/1}}.
+	[fun test_flowmeter_basics/1,fun test_flowmeter_operation/1]}}.
 
-flowmeter_operation_test_()->
-	{"Test the basics of operating a flowmeter in a system.",
-	{setup,
-	fun start_3pipes_water_pump_flowmeter/0,
-	fun stop/1,
-	fun test_flowmeter_operation/1}}.
+% flowmeter_operation_test_()->
+% 	{"Test the basics of operating a flowmeter in a system.",
+% 	{setup,
+% 	fun start_3pipes_water_pump_flowmeter/0,
+% 	fun stop/1,
+% 	fun test_flowmeter_operation/1}}.
 
 heatex_basic_test_()->
-	{"Test the basics of creating a heat exchanger in a system.",
-	{setup,
+	{"1) Test the basics of creating a heat exchanger in a system.
+	  2) Test the basics of operating a heat exchanger in a system.",
+	{foreach,
 	fun start_3pipes_water_pump_flowmeter_heatex/0,
 	fun stop/1,
-	fun test_heatex_basics/1}}.
+	[fun test_heatex_basics/1,fun test_heatex_operation/1]}}.
 
-heatex_operation_test_()->
-	{"Test the basics of operating a heat exchanger in a system.",
+% heatex_operation_test_()->
+% 	{"Test the basics of operating a heat exchanger in a system.",
+% 	{setup,
+% 	fun start_3pipes_water_pump_flowmeter_heatex/0,
+% 	fun stop/1,
+% 	fun test_heatex_operation/1}}.
+
+fully_integrated_test_() ->
+	{"Testing a custom, hand-made and fully-fledged system.",
 	{setup,
 	fun start_3pipes_water_pump_flowmeter_heatex/0,
 	fun stop/1,
-	fun test_heatex_operation/1}}.
+	fun test_fully_integrated_system/1}}.
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %%% SETUP FUNCTIONS %%%
@@ -337,7 +352,7 @@ test_flowmeter_basics({_,_,_,_,_,_,Tasks})->
 
 test_flowmeter_operation({_,Pipes,_,_,_,_,Tasks})->
 	[Pipe1,Pipe2,Pipe3] = Pipes,
-	[_,_,FlowMeterInst,_] = Tasks,
+	[_,_,FlowMeterInst,FlowMeterTyp] = Tasks,
 	% ?debugFmt("Testing flowmeter operation~n",[]),
 	% ?debugFmt("Pipes=~p~n",[Pipes]),
 	% ?debugFmt("Connectors=~p~n",[Connectors]),
@@ -349,6 +364,9 @@ test_flowmeter_operation({_,Pipes,_,_,_,_,Tasks})->
 	% ?debugFmt("FlowMInst=~p~n",[FlowMeterInst]),
 	% ?debugFmt("FlowMTyp=~p~n",[FlowMeterTyp]),
 	
+	%Test request for the Type:
+	{ok,Typ} = msg:get(FlowMeterInst,get_type),
+	Test0 = ?_assertEqual(Typ,FlowMeterTyp),
 	%First test the real measurement value of the flow
 	%?debugFmt("In between test ~p~n",[flowMeterInst:measure_flow(FlowMeterInst)]),
 	{ok,{ok,RealMeasurement}} = flowMeterInst:measure_flow(FlowMeterInst),
@@ -363,7 +381,7 @@ test_flowmeter_operation({_,Pipes,_,_,_,_,Tasks})->
 	FluidumInfluenceFunctions = [Fn1, Fn2, Fn3],
 	RequiredFlow = compute({0,10},FluidumInfluenceFunctions),
 	Test2 = ?_assertEqual(Flow,RequiredFlow),
-	[Test1,Test2].
+	[Test0,Test1,Test2].
 
 test_heatex_basics({_,_,_,_,_,_,Tasks})->	
 	[_,_,_,_,HeatExTyp,HeatEx] = Tasks,
@@ -379,6 +397,55 @@ test_heatex_operation({_,_,_,_,_,_,Tasks})->
 	Temp = 32,
 	{ok,GivenInfluence} = Influence(Flow,Temp),
 	[?_assertEqual(Temp + (Difference/Flow),GivenInfluence)].
+
+test_fully_integrated_system({PipeTypePID,Pipes,Connectors,Locations,FluidumType,Fluid,Tasks}) ->
+	
+	%Sanity checks: Test if all given processes are alive
+	[Pipe1, Pipe2, Pipe3] = Pipes,
+	TestList1 = [?_assert(erlang:is_process_alive(PipeTypePID)),?_assert(erlang:is_process_alive(Pipe1)),
+				 ?_assert(erlang:is_process_alive(Pipe2)),?_assert(erlang:is_process_alive(Pipe3))],
+
+	[[P1C1,P1C2],[P2C1,P2C2],[P3C1,P3C2]] = Connectors,
+	TestList2 = [?_assert(erlang:is_process_alive(P1C1)),?_assert(erlang:is_process_alive(P1C2)),
+				 ?_assert(erlang:is_process_alive(P2C1)),?_assert(erlang:is_process_alive(P2C2)),
+				 ?_assert(erlang:is_process_alive(P3C1)),?_assert(erlang:is_process_alive(P3C2))],
+
+	[L1, L2, L3] = Locations,
+	TestList3 = [?_assert(erlang:is_process_alive(L1)),?_assert(erlang:is_process_alive(L2)),
+				 ?_assert(erlang:is_process_alive(L3))],
+
+	TestList4 = [?_assert(erlang:is_process_alive(FluidumType)),?_assert(erlang:is_process_alive(Fluid))],
+
+	[PumpInst,PumpTypPID,FlowMeterInst,FlowMeterTyp,HeatExTyp,HeatEx] = Tasks,
+	TestList5 = [?_assert(erlang:is_process_alive(PumpInst)),?_assert(erlang:is_process_alive(PumpTypPID)),
+				 ?_assert(erlang:is_process_alive(FlowMeterInst)),?_assert(erlang:is_process_alive(FlowMeterTyp)),
+				 ?_assert(erlang:is_process_alive(HeatExTyp)),?_assert(erlang:is_process_alive(HeatEx))],
+	
+	%Now test the flow functionality of the system:
+
+	%First, test with the pump still turned off
+
+	%Next, turn the pump on
+	pumpInst:switch_on(PumpInst),
+	%Initialize the process monitoring the flow
+    {ok,SystemFlowPid} = systemFlow:create([PumpInst],FlowMeterInst,1),
+	%Test if flow estimations are correct, based on the calculations in the .xlsx file
+	{ok,{N1,Flow1}} = systemFlow:getSystemFlow(SystemFlowPid),
+	Test1 = ?_assertEqual(Flow1,testFunctions:flowForBasicSituation(N1)),
+	timer:sleep(5),
+	{ok,{N2,Flow2}} = systemFlow:getSystemFlow(SystemFlowPid),
+	Test2 = ?_assertEqual(Flow2,testFunctions:flowForBasicSituation(N2)),
+	timer:sleep(5),
+	{ok,{N3,Flow3}} = systemFlow:getSystemFlow(SystemFlowPid),
+	Test3 = ?_assertEqual(Flow3,testFunctions:flowForBasicSituation(N3)),
+	timer:sleep(5),
+	{ok,{N4,Flow4}} = systemFlow:getSystemFlow(SystemFlowPid),
+	Test4 = ?_assertEqual(Flow4,testFunctions:flowForBasicSituation(N4)),
+	
+	systemFlow:stopSystemFlow(SystemFlowPid),
+	%
+	%?debugFmt("Simulation testvalue ~p~n",[simulation:simulateFlow(FlowMeterInst,PumpInst)]),
+	TestList1++TestList2++TestList3++TestList4++TestList5++[Test1,Test2,Test3,Test4].
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%% HELPER FUNCTIONS %%%
