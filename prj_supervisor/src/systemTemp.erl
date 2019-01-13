@@ -10,7 +10,7 @@ create(ListOfHeatEx,SystemFlow,Delay)->
 create(ListOfHeatEx,SystemFlow,Delay,Number)->
     Atom = testFunctions:numberToAtom(systemTemp,Number),
     Exists = whereis(Atom),
-    if(Exists==undefine)->
+    if(Exists==undefined)->
         gen_server:start_link({local,Atom},?MODULE,[{ListOfHeatEx,SystemFlow,Delay}],[]);
     true->
         unregister(Atom),

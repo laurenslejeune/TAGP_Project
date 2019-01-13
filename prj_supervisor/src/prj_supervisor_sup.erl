@@ -32,7 +32,26 @@ start_link() ->
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
     survivor:start(),
-    {ok, {{one_for_all, 0, 1}, []}}.
+    SystemSupervisorSpec = #{id => systemsupervisor_child,
+                        start => {systemSupervisor, create, [7,4,3,true]},
+                        restart => permanent,
+                        shutdown => brutal_kill,
+                        type => supervisor,
+                        modules => [systemSupervisor]},
+    SingleSystemControllerSpec = #{id => singlesystemcontroller_child,
+                                start => {singleSystemController, create, [7,4,3]},
+                                restart => permanent,
+                                shutdown => brutal_kill,
+                                type => worker,
+                                modules => [singleSystemController]},
+    DigitalTwinControllerSpec = #{id => digitaltwincontroller_child,
+                                start => {digitalTwinController, create, [7,4,3]},
+                                restart => permanent,
+                                shutdown => brutal_kill,
+                                type => worker,
+                                modules => [digitalTwinController]},
+    ChildSpecs = [SystemSupervisorSpec,SingleSystemControllerSpec,DigitalTwinControllerSpec],
+    {ok, {{one_for_all, 2, 1}, ChildSpecs}}.
 
 %%====================================================================
 %% Internal functions

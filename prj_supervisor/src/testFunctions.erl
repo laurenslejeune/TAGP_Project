@@ -6,6 +6,7 @@
 -export([round/2]).
 -export([generateDifList/2]).
 -export([numberToAtom/2]).
+-export([switchOnAllPumps/1,switchOffAllPumps/1]).
 -include_lib("eunit/include/eunit.hrl").
 
 init() ->
@@ -206,3 +207,17 @@ generateDifList(1,DifList)->
 generateDifList(N,DifList)->
     RandomDif = rand:uniform(3)-2, %Generates random number in range [-1;1]
     generateDifList(N-1,DifList++[RandomDif]).
+
+switchOnAllPumps([Pump])->
+	pumpInst:switch_on(Pump);
+
+switchOnAllPumps([Pump|OtherPumps])->
+	pumpInst:switch_on(Pump),
+	switchOnAllPumps(OtherPumps).
+
+switchOffAllPumps([Pump])->
+	pumpInst:switch_off(Pump);
+
+switchOffAllPumps([Pump|OtherPumps])->
+	pumpInst:switch_off(Pump),
+	switchOffAllPumps(OtherPumps).
