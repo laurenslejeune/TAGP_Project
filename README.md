@@ -1,4 +1,4 @@
-prj_basic
+Project TAGP
 =====
 
 This Erlang application implements the digital twin simulation model provided in:
@@ -7,30 +7,17 @@ This application strives to implement universally usable unit test with EUnit an
 
 Please note that, to be able to run property tests in this system, both rebar3 and PropEr need to be installed and added to the PATH.
 
-Build
+This README provides general information concering the overall project, the different folders are more specific about their role and use.
+
+Project structure
 -----
-Compiling the project:
+This project has 3 implementations:
 
-    $ rebar3 compile
-Removing .beam-files:
-
-    $ rebar3 clean
-Creating a digital twin:
-
-    $ rebar3 shell
-This command will be the equivalent of the $ erl command, namely in opening an Erlang shell.
-Next, the digital twin must be created:
-```Erlang
-digitalTwin:create(Npipes,Npumps,Nhex). %Generates a digital twin system
-digitalTwin:startPumps().               %Starts all pumps in the systems
-digitalTwin:stopPumps().                %Stops all pumps in the systems
-digitalTwin:getDigitalTwinData().       %Return a batch of data from the systems
-digitalTwin:stopDigitalTwin().          %Stops the digital twin
-%Due to registration, only one digital twin may be active at any time
-```
-Please note that the number of pipes, _Npipes_, needs to be larger than both the number of pumps _Npumps_ and the number of heat
- exchangers _Nhex_. Pipes can contain a pump and an heat exchanger simultaneously. Additionaly, also the flow meter may be added unto any pipe.
-The differences for the heat exchangers are randomly generated, but exactly the same for both systems.
+1. prj_basic: 
+prj_basic is the implementation of the basic assignment, namely to implement testing for the given code. Implementation of the digital twin, EUnit, PropEr, dialyer en typer have been applied.
+2. prj_gen_server: 
+prj_gen_server implements the same system as (1), but using only gen_servers. By using exactly the same tests as in (1), it can be proven that this gen_server implements the code correctly. The digital twin is also build-able in this version.
+3. prj_supervisor: prj_supervisor finally implements the system of (2) using supervisors. This allows for robustness, as the system can be rebooted upon crash.
 
 Unit testing using EUnit
 -----
@@ -78,12 +65,17 @@ will run 1000 tests for all properties. It is advised against doing this though,
 
 Finally, whenever a property fails, shrinking data is provided. Shrinking strives to simplify input data to easily understand the failed test, in case of very complex input data. Since input data in our properties never exceeds 3 integers, shrinking is unnecessary and is best simply turned off. Additionally, it is quite simple to have tests cases output custom data that provide more insight as to why the test failed.
 
-Turn off shrinking using
+Turn off shrinking using:
 
     $ rebar3 proper --noshrink
 
 ### PropEr vs QuickCheck
 While PropEr provides the ability for property testing, [QuickCheck (Lite)](http://www.quviq.com/products/erlang-quickcheck/) also provides this service. A case could be made for QuickCheck, but Proper has been chosen for the following reasons:
+
+1. PropEr is open-source, QuickCheck is not.
+2. PropEr is still being updated (see github page).
+3. PropEr is supported in rebar3, QuickCheck is not.
+
 
 ### Useful links
 All relevant information on property tests can be found here:
