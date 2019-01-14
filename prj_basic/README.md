@@ -39,4 +39,6 @@ In *src/buildSystem.erl*, a plethora of functions to generate arbitrary systems 
 PropEr remarks
 -----
 
-All proper tests should run without error. Very occasionally, a fail may emerge
+All proper tests should run without error. Very occasionally, a fail may emerge due to:
+
+- Timing mismatch between two twins: For example when measuring flow from 2 systems, and the systems are both in their transients, the can be on 2 different points in those transients. Normally, in a transient, if at time N the value is MAX - delta, then for N - 1 and N + 1 the values will be MIN + delta. This can cause a fail.

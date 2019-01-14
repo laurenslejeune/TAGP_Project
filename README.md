@@ -73,6 +73,16 @@ Eunit documentation and guides can be found on:
 
 [Official documentation of EUnit](http://erlang.org/doc/apps/eunit/chapter.html)
 
+Dialyzer and TypEr
+-----
+Using dialyzer and TypEr, the project files are analyzed. Dialyzer test can be run using:
+    
+    $ rebar3 dialyzer
+All remarks made by the dialyzer have been resolved. Additionally, TypEr has been experimented with to add type-information in the code. This has been done in a limited fashion, as it does not provide much actual value. TypEr can be run using:
+
+    $typer dir/and/file/to/test.erl
+
+
 Property testing using PropEr
 -----
 
@@ -103,7 +113,8 @@ While PropEr provides the ability for property testing, [QuickCheck (Lite)](http
 
 1. PropEr is open-source, QuickCheck is not.
 2. PropEr is still being updated (see github page).
-3. PropEr is supported in rebar3, QuickCheck is not.
+
+Both methods are supported by rebar3.
 
 ### Quick overview of proper tests
 Due to lack of clear documentation in the test files, a short overview of the relevant proper tests will be given here. There are 8 relevant properties. 6 of these are found in */test/prop_base.erl*, the other two are in */test/prop_systemFlow_tests.erl* and */test/prop_systemTemp_tests.erl*.

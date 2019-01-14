@@ -28,7 +28,7 @@ loop({N,Delay})->
     end.
 
 storeData(N)->
-    {ok,File}=file:open("data.csv",write),
+    {ok,File}=file:open("data.csv",[write]),
     file:write(File,"Flow1,Flow2,Temp1,Temp2\n"),
     writeLine(N,0,File),
     file:close(File),
