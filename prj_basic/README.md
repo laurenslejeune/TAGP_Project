@@ -32,66 +32,11 @@ Please note that the number of pipes, _Npipes_, needs to be larger than both the
  exchangers _Nhex_. Pipes can contain a pump and an heat exchanger simultaneously. Additionaly, also the flow meter may be added unto any pipe.
 The differences for the heat exchangers are randomly generated, but exactly the same for both systems.
 
-Unit testing using EUnit
+EUnit remarks
 -----
-Command to run unit testing:
+In *src/buildSystem.erl*, a plethora of functions to generate arbitrary systems are implemented. A large portion of the functions is used for testing in *test/buildSystem_tests.erl*, where specific instructions and modules are tested. If a system passes these tests, the basic functioning is implemented correctly. 81 unit tests are implemented to test global and more specific characteristics of the code.
 
-    $ rebar3 eunit
-This command runs eunit for all tests in the project. Tests are functions that end with an "_test_" in their name. All unit tests in this project are stored in either *buildSystem_tests_.erl* or *testFunctions_tests.erl*.
-
-*buildSystem_tests_.erl* runs all tests designed to test basic functioning of the modules provided in the above mentioned repo. These modules, as well as additional modules, are all tested for their basic functioning.
-
-More in-depth analysis can be done using the following commands:
-
-    $ rebar3 eunit -v
-This provides a more in depth insight in the individual test cases and their results. When crashes or errors occur, this also gives more detailed error reports.
-
-    $ rebar3 eunit --dir=test
-This ensures only the test cases in the directory tests/ are run.
-
-In order for a system to be able to function properly, all 81 tests must succeed.
-
-Eunit documentation and guides can be found on:
-
-https://learnyousomeerlang.com/eunit#the-need-for-tests
-
-http://erlang.org/doc/apps/eunit/chapter.html
-
-Property testing using PropEr
+PropEr remarks
 -----
 
-### Getting started
-
-Where unit tests strive to test a single, well defined case, property tests are used to pratically test all possible inputs. While literally testing every singe possibility would not be very efficient, property tests are pretty good at finding bugs. Running these tests can be done using the follwing command:
-    
-    $ rebar3 proper
-This runs every property (every property-based test case) simple 100 times. If one of these 100 tests fails, the property fails. Since some properties are quite time-intensive to test, it may be beneficial to test a single property. This can be done using the following command:
-
-    $ rebar3 -m module -p property
-This command runs 100 tests for the property _property_ in module _module_. As a practical example, the command:
-    
-    $ rebar3 -m prop_base -p prop_test_digital_twin_generation
-tests the property *prop_test_digital_twin_generation* 100 times. To specify the number of tests to run for the specified properties, the command:
-    
-    $ rebar3 proper -n 1000
-will run 1000 tests for all properties. It is advised against doing this though, as it may overload the Erlang system. More advisable is running a higher number of tests for a single property.
-
-Finally, whenever a property fails, shrinking data is provided. Shrinking strives to simplify input data to easily understand the failed test, in case of very complex input data. Since input data in our properties never exceeds 3 integers, shrinking is unnecessary and is best simply turned off. Additionally, it is quite simple to have tests cases output custom data that provide more insight as to why the test failed.
-
-Turn off shrinking using
-
-    $ rebar3 proper --noshrink
-
-### PropEr vs QuickCheck
-While PropEr provides the ability for property testing, [QuickCheck (Lite)](http://www.quviq.com/products/erlang-quickcheck/) also provides this service. A case could be made for QuickCheck, but Proper has been chosen for the following reasons:
-
-### Useful links
-All relevant information on property tests can be found here:
-
-[Github: Installation and getting started](https://github.com/proper-testing/proper)
-
-[PropEr website](https://proper-testing.github.io/)
-
-[PropEr Documentation](https://proper-testing.github.io/apidocs/)
-
-[Online guide](https://propertesting.com/toc.html)
+All proper tests should run without error. Very occasionally, a fail may emerge

@@ -136,7 +136,7 @@ test_random_system_switched_off(N_pipes,N_pumps,N_he)->
 	%CorrectFlow = testFunctions:flowForAnySituationWithPumpControl(N,N_pipes,N_pumps,TimingInformation),
 	%io:format("N:~p| ~p pipes, ~p pump(s), Flow = ~p, CorrectFlow = ~p|~n",[N,N_pipes,N_pumps,Flow,CorrectFlow]),
 	%io:format("Old ~p, New ~p~n",[OldFlow,Flow]),
-	Result = (OldFlow>Flow),
+	Result = (OldFlow>=Flow),
 	
 	SystemFlowPid ! stop,
     getSystemFlow:stopSystemFlow(GetSystemFlowPid),
@@ -162,7 +162,7 @@ test_random_system_switched_on(N_pipes,N_pumps,N_he)->
 	%CorrectFlow = testFunctions:flowForAnySituationWithPumpControl(N,N_pipes,N_pumps,TimingInformation),
 	%io:format("N:~p| ~p pipes, ~p pump(s), Flow = ~p, CorrectFlow = ~p|~n",[N,N_pipes,N_pumps,Flow,CorrectFlow]),
 	%Result = (abs(CorrectFlow-Flow)<1),
-	Result = (OldFlow < Flow),
+	Result = (OldFlow =< Flow),
 	SystemFlowPid ! stop,
     getSystemFlow:stopSystemFlow(GetSystemFlowPid),
 	{Result,OldFlow,Flow}.
