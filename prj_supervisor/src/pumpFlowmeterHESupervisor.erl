@@ -2,7 +2,7 @@
 -behaviour(supervisor).
 -export([create/4,init/1]).
 -export([getChildren/0]).
--export([generateNPumpIds/2]).
+-export([generateNPumpIds/2,generateNHEXIds/2]).
 
 create({Begin_N,End_N},N_pumps,N_hex,StartDigitalTwin)->
     supervisor:start_link({local,?MODULE},?MODULE,[{Begin_N,End_N},N_pumps,N_hex,StartDigitalTwin]).
@@ -151,7 +151,7 @@ init([{Begin_N,End_N},N_pumps,N_hex,true])->
                     modules => [systemTemp]},
 
     DigitalTwinSpec = #{id => systemsupervisor_twin_child,
-                        start => {systemSupervisorTwin, create, [7,4,3,DifList]},
+                        start => {systemSupervisorTwin, create, [End_N,N_pumps,N_hex,DifList]},
                         restart => permanent,
                         shutdown => brutal_kill,
                         type => supervisor,
@@ -171,7 +171,7 @@ generateNPumpsSpecs(N,N,Pipes,Fun)->
 
     PipeInst = #{id => Id,
                 start => {pumpInst, create, [self(),pumpTyp,RandomPipe,Fun,N]},
-                modules => [pipeInst]},
+                modules => [pumpInst]},
     lists:delete(RandomPipe,Pipes),
     [PipeInst];
 
@@ -183,7 +183,7 @@ generateNPumpsSpecs(CurrentN,N,Pipes,Fun)->
 
     PipeInst = #{id => Id,
                 start => {pumpInst, create, [self(),pumpTyp,RandomPipe,Fun,CurrentN]},
-                modules => [pipeInst]},
+                modules => [pumpInst]},
     lists:delete(RandomPipe,Pipes),
 
     [PipeInst]++generateNPumpsSpecs(CurrentN+1,N,Pipes,Fun).

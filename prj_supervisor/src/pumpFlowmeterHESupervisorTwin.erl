@@ -13,6 +13,7 @@ init([{Begin_N,End_N},N_pumps,N_hex,DifList])->
     %Create pump specs:
     Pumps1 = generateNPumpIds(1,N_pumps),
     Pipes = fluidumSupervisor:generateNPipesIds(Begin_N,End_N),
+    %io:format("~p|Generating ~p -> ~p pumps~n",[N_pumps,N_pumps+1,2*N_pumps]),
     PumpInstSpecs = generateNPumpsSpecsTwin(N_pumps+1,2*N_pumps,Pipes,Pumps1),
     PumpSpecs = PumpInstSpecs,
     
@@ -62,12 +63,15 @@ getChildren()->
     supervisor:which_children(?MODULE).
 
 generateNPumpsSpecsTwin(N,N,Pipes,[RefPump|_])->
+    %io:format("Creating pump ~p~n",[N]),
     Id = list_to_atom(string:concat("pumpinst_child",integer_to_list(N))),
     Fun = fun(on) ->
 			pumpInst:switch_on(RefPump),
+            io:format("Switching on ~p~n",[RefPump]),
 			{ok,on};
 			(off)->
 			pumpInst:switch_off(RefPump),
+            io:format("Switching off ~p~n",[RefPump]),
 			{ok,off}
 		end,
     RandomIndex = rand:uniform(length(Pipes)), %Provides an integer between 1 and length(Pipes)
@@ -75,16 +79,19 @@ generateNPumpsSpecsTwin(N,N,Pipes,[RefPump|_])->
 
     PipeInst = #{id => Id,
                 start => {pumpInst, create, [self(),pumpTyp,RandomPipe,Fun,N]},
-                modules => [pipeInst]},
+                modules => [pumpInst]},
     lists:delete(RandomPipe,Pipes),
     [PipeInst];
 
 generateNPumpsSpecsTwin(CurrentN,N,Pipes,[RefPump|RefPumps])->
+    %io:format("Creating pump ~p -> ~p~n",[CurrentN,N]),
     Id = list_to_atom(string:concat("pumpinst_child",integer_to_list(CurrentN))),
     Fun = fun(on) ->
 			pumpInst:switch_on(RefPump),
+            io:format("Switching on ~p~n",[RefPump]),
 			{ok,on};
 			(off)->
+            io:format("Switching off ~p~n",[RefPump]),
 			pumpInst:switch_off(RefPump),
 			{ok,off}
 		end,
@@ -93,7 +100,7 @@ generateNPumpsSpecsTwin(CurrentN,N,Pipes,[RefPump|RefPumps])->
 
     PipeInst = #{id => Id,
                 start => {pumpInst, create, [self(),pumpTyp,RandomPipe,Fun,CurrentN]},
-                modules => [pipeInst]},
+                modules => [pumpInst]},
     lists:delete(RandomPipe,Pipes),
 
     [PipeInst]++generateNPumpsSpecsTwin(CurrentN+1,N,Pipes,RefPumps).

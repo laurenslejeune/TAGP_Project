@@ -6,7 +6,7 @@
 -export([round/2]).
 -export([generateDifList/2]).
 -export([numberToAtom/2]).
--export([switchOnAllPumps/1,switchOffAllPumps/1]).
+-export([switchOnAllPumps/1,switchOffAllPumps/1,getAllPumpsOn/1,getAllPumpsOff/1]).
 -include_lib("eunit/include/eunit.hrl").
 
 init() ->
@@ -209,15 +209,51 @@ generateDifList(N,DifList)->
     generateDifList(N-1,DifList++[RandomDif]).
 
 switchOnAllPumps([Pump])->
+	io:format("Switching on ~p~n",[Pump]),
 	pumpInst:switch_on(Pump);
 
 switchOnAllPumps([Pump|OtherPumps])->
 	pumpInst:switch_on(Pump),
+	io:format("Switching on ~p~n",[Pump]),
 	switchOnAllPumps(OtherPumps).
 
 switchOffAllPumps([Pump])->
+	io:format("Switching off ~p~n",[Pump]),
 	pumpInst:switch_off(Pump);
 
 switchOffAllPumps([Pump|OtherPumps])->
+	io:format("Switching off ~p~n",[Pump]),
 	pumpInst:switch_off(Pump),
 	switchOffAllPumps(OtherPumps).
+
+getAllPumpsOn([P])->
+	{ok,OnOff} = pumpInst:is_on(P),
+	if(OnOff==on)->
+		[P];
+	true->
+		[]
+	end;
+
+getAllPumpsOn([P|Pumps])->
+	{ok,OnOff} = pumpInst:is_on(P),
+	if(OnOff==on)->
+		[P]++getAllPumpsOn(Pumps);
+	true->
+		getAllPumpsOn(Pumps)
+	end.
+
+getAllPumpsOff([P])->
+	{ok,OnOff} = pumpInst:is_on(P),
+	if(OnOff==off)->
+		[P];
+	true->
+		[]
+	end;
+
+getAllPumpsOff([P|Pumps])->
+	{ok,OnOff} = pumpInst:is_on(P),
+	if(OnOff==off)->
+		[P]++getAllPumpsOff(Pumps);
+	true->
+		getAllPumpsOff(Pumps)
+	end.

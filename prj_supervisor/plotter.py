@@ -47,14 +47,14 @@ time = [tick*60/len(flow1) for tick in range(0,len(flow1))] #Time in seconds
 
 plt.figure(1)
 plt.subplot(121)
-plt.plot(time,flow1,'ro',time,flow2,'b-')
+plt.plot(time,flow1,'r-',time,flow2,'bo')
 plt.axis([0,60,min(1.1*minInList(flow1),1.1*minInList(flow2)),max(1.1*maxInList(flow1),1.1*maxInList(flow2))])
 plt.xlabel('Time (s)')
 plt.ylabel('Flow')
 plt.title('Flow in function of the time',fontsize=12)
 
 plt.subplot(122)
-plt.plot(time,temp1,'ro',time,temp2,'b-')
+plt.plot(time,temp1,'r-',time,temp2,'bo')
 plt.axis([0,60,min(1.1*minInList(temp1),1.1*minInList(temp2)),max(1.1*maxInList(temp1),1.1*maxInList(temp2))])
 plt.title('Temperature in function of the time',fontsize=12)
 plt.xlabel('Time (s)')

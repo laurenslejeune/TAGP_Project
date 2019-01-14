@@ -32,7 +32,7 @@ start_link() ->
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
     survivor:start(),
-    Double = false,
+    Double = true,
     N_pipes = 7,
     N_pumps = 6,
     N_hex = 3,
