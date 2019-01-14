@@ -54,13 +54,14 @@ handle_call({OtherMessage,_Ref},_From,{Host, State, PumpTyp_Pid, PipeInst_Pid})-
 	{reply,Answer,{Host, State, PumpTyp_Pid, PipeInst_Pid}}.
 
 terminate(Reason,_)->
-	RegisteredAtom = whereis(self()),
-	if(RegisteredAtom==undefined)->
-		{ok,Reason};
-	true->
-		unregister(self()),
-		{ok,Reason}
-	end.
+	% RegisteredAtom = whereis(self()),
+	% if(RegisteredAtom==undefined)->
+	% 	{ok,Reason};
+	% true->
+	% 	unregister(self()),
+	% 	{ok,Reason}
+	% end.
+	{ok,Reason}.
 
 switch_off(PumpInst_Pid) ->
 	gen_server:cast(PumpInst_Pid,switchOff).

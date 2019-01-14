@@ -62,10 +62,11 @@ handle_call({OtherMessage,_Ref},_From,{Host, State, FlowMeterTyp_Pid, ResInst_Pi
 	{reply,Answer,{Host, State, FlowMeterTyp_Pid, ResInst_Pid}}.
 
 terminate(Reason,_)->
-	RegisteredAtom = whereis(self()),
-	if(RegisteredAtom==undefined)->
-		{ok,Reason};
-	true->
-		unregister(self()),
-		{ok,Reason}
-	end.
+	% RegisteredAtom = whereis(self()),
+	% if(RegisteredAtom==undefined)->
+	% 	{ok,Reason};
+	% true->
+	% 	unregister(self()),
+	% 	{ok,Reason}
+	% end.
+	{ok,Reason}.

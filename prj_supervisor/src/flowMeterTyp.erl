@@ -55,13 +55,14 @@ handle_cast(_,[])->
 	{noreply,[]}.
 
 terminate(Reason,_)->
-	RegisteredAtom = whereis(self()),
-	if(RegisteredAtom==undefined)->
-		{ok,Reason};
-	true->
-		unregister(self()),
-		{ok,Reason}
-	end.
+	% RegisteredAtom = whereis(self()),
+	% if(RegisteredAtom==undefined)->
+	% 	{ok,Reason};
+	% true->
+	% 	unregister(self()),
+	% 	{ok,Reason}
+	% end.
+	{ok,Reason}.
 
 computeFlow(ResCircuit) -> 
  	Interval = {0, 10}, % ToDo >> discover upper bound for flow.

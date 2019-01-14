@@ -51,13 +51,7 @@ handle_cast(update,{ListOfPumpInstances,FlowMeter,Time,CurrentFlow,UpdaterPid})-
 
 terminate(Reason,{_,_,_,_,UpdaterPid})->
     UpdaterPid ! stop,
-    RegisteredAtom = whereis(self()),
-	if(RegisteredAtom==undefined)->
-		{ok,Reason};
-	true->
-		unregister(self()),
-		{ok,Reason}
-	end.
+    {ok,Reason}.
 
 getNewFlow(Flow,[NextPump|Others],NewFlow,MaxForce) ->
     %Get the flow influence for this pump

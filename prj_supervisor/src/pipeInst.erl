@@ -66,11 +66,12 @@ terminate(Reason,State)->
 	connector:discard(C2),
 	{ok,[Location]} = msg:get(self(),get_locations),
 	location:dispose(Location),
-	io:format("Terminating pipe instance ~p~n",[self()]),
-	RegisteredAtom = whereis(self()),
-	if(RegisteredAtom==undefined)->
-		{ok,Reason};
-	true->
-		unregister(self()),
-		{ok,Reason}
-	end.
+	%io:format("Terminating pipe instance ~p~n",[self()]),
+	%RegisteredAtom = whereis(self()),
+	%if(RegisteredAtom==undefined)->
+	%	{ok,Reason};
+	%true->
+	%	unregister(self()),
+	%	{ok,Reason}
+	%end.
+	{ok,Reason}.

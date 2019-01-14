@@ -42,13 +42,7 @@ handle_call({get_temp,_Ref},_,{ListOfHeatEx,SystemFlow,Time,CurrentTemp,UpdaterP
 
 terminate(Reason,{_,_,_,_,UpdaterPid})->
     UpdaterPid ! stop,
-    RegisteredAtom = whereis(self()),
-	if(RegisteredAtom==undefined)->
-		{ok,Reason};
-	true->
-		unregister(self()),
-		{ok,Reason}
-	end.
+	{ok,Reason}.
 
 updateTemp([HeatEx],Flow,CurrentTemp) ->
     {ok, {ok,Influence}} = heatExchangerInst:temp_influence(HeatEx),

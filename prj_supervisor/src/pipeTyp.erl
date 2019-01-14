@@ -55,12 +55,13 @@ handle_cast(something,_State) ->
 	{noreply,[]}.	
 
 terminate(Reason,_)->
-	RegisteredAtom = whereis(self()),
-	if(RegisteredAtom==undefined)->
-		{ok,Reason};
-	true->
-		unregister(self()),
-		{ok,Reason}
-	end.
+	% RegisteredAtom = whereis(self()),
+	% if(RegisteredAtom==undefined)->
+	% 	{ok,Reason};
+	% true->
+	% 	unregister(self()),
+	% 	{ok,Reason}
+	% end.
+	{ok,Reason}.
 
 flow(N) -> - 0.01 * N. 

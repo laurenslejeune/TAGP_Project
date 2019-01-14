@@ -1,13 +1,14 @@
 -module(digitalTwinController).
 -behaviour(gen_server).
--export([create/3,init/1]).
+-export([create/4,init/1]).
 -export([handle_call/3,handle_cast/2]).
 -export([getSystemFlow/0,getSystemTemp/0,switchOnPumps/0,switchOffPumps/0]).
 
-create(N_pipes,N_pumps,N_hex)->
-    gen_server:start_link({local,?MODULE},?MODULE,[N_pipes,N_pumps,N_hex],[]).
+create(N_pipes,N_pumps,N_hex,IsRelevant)->
+    gen_server:start_link({local,?MODULE},?MODULE,[N_pipes,N_pumps,N_hex,IsRelevant],[]).
 
-init([N_pipes,N_pumps,N_hex])->
+init([N_pipes,N_pumps,N_hex,IsRelevant])->
+    collectDataTwin:create(6,IsRelevant),
     {ok,{N_pipes,N_pumps,N_hex}}.
 
 getSystemFlow()->

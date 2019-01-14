@@ -1,13 +1,14 @@
 -module(singleSystemController).
 -behaviour(gen_server).
--export([create/3,init/1]).
+-export([create/4,init/1]).
 -export([handle_call/3,handle_cast/2]).
 -export([switchOnPumps/0,switchOffPumps/0,getSystemFlow/0,getSystemTemp/0]).
 
-create(N_pipes,N_pumps,N_hex)->
-    gen_server:start_link({local,?MODULE},?MODULE,[N_pipes,N_pumps,N_hex],[]).
+create(N_pipes,N_pumps,N_hex,IsRelevant)->
+    gen_server:start_link({local,?MODULE},?MODULE,[N_pipes,N_pumps,N_hex,IsRelevant],[]).
 
-init([N_pipes,N_pumps,N_hex])->
+init([N_pipes,N_pumps,N_hex,IsRelevant])->
+    collectDataSingle:create(6,IsRelevant),
     {ok,{N_pipes,N_pumps,N_hex}}.
 
 getSystemFlow()->
@@ -25,12 +26,12 @@ handle_call({get_temp,_Ref},_,State)->
     {reply,{N,Temp},State}.
 
 handle_cast(switch_on,{N_pipes,N_pumps,N_hex})->
-    Pumps = pumpFlowmeterHESupervisor:generateNPumpIds(1,N_pipes),
+    Pumps = pumpFlowmeterHESupervisor:generateNPumpIds(1,N_pumps),
     testFunctions:switchOnAllPumps(Pumps),
     {noreply,{N_pipes,N_pumps,N_hex}};
 
 handle_cast(switch_off,{N_pipes,N_pumps,N_hex})->
-    Pumps = pumpFlowmeterHESupervisor:generateNPumpIds(1,N_pipes),
+    Pumps = pumpFlowmeterHESupervisor:generateNPumpIds(1,N_pumps),
     testFunctions:switchOffAllPumps(Pumps),
     {noreply,{N_pipes,N_pumps,N_hex}}.
 

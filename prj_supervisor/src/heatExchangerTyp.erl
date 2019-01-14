@@ -29,10 +29,11 @@ handle_call({initial_state, [ResInst_Pid, PipeInst_Pid],_Ref},_From,[])->
 	{reply,#{resInst => ResInst_Pid, pipeInst => PipeInst_Pid},[]}.
 
 terminate(Reason,_)->
-	RegisteredAtom = whereis(self()),
-	if(RegisteredAtom==undefined)->
-		{ok,Reason};
-	true->
-		unregister(self()),
-		{ok,Reason}
-	end.
+	% RegisteredAtom = whereis(self()),
+	% if(RegisteredAtom==undefined)->
+	% 	{ok,Reason};
+	% true->
+	% 	unregister(self()),
+	% 	{ok,Reason}
+	% end.
+	{ok,Reason}.

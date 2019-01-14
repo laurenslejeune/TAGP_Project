@@ -1,13 +1,17 @@
--module(collectData).
--export([create/1,init/1]).
+-module(collectDataSingle).
+-export([create/2,init/1]).
 
-create(Delay) ->
-    {ok,spawn(?MODULE,init,[{Delay}])}.
+create(Delay,IsRelevant) ->
+    {ok,spawn(?MODULE,init,[{Delay,IsRelevant}])}.
 
-init({Delay})->
+init({Delay,true})->
     ets:new(stored_data, [named_table, ordered_set, public]),
-    io:format("Created stored__data table~n",[]),
-    loop({0,Delay}).
+    io:format("Created stored_data table~n",[]),
+    loop({0,Delay});
+
+init({Delay,false})->
+    io:format("Not creating stored_data table~n",[]),
+    ok.
 
 loop({N,Delay})->
     %io:format("~p~n",[N]),
@@ -16,8 +20,10 @@ loop({N,Delay})->
         %{ok,{_,Flow2}} = getSystemFlow:getSystemFlow(GetSystemFlow2),
         %{ok,{_,Temp1}} = getSystemTemp:getSystemTemp(GetSystemTemp1),
         %{ok,{_,Temp2}} = getSystemTemp:getSystemTemp(GetSystemTemp2),
-        {ok,{{_,Flow1},{_,Flow2},{_,Temp1},{_,Temp2}}} = digitalTwin:getDigitalTwinData(),
-        Data = {Flow1,Flow2,Temp1,Temp2},
+        %{ok,{{_,Flow1},{_,Flow2},{_,Temp1},{_,Temp2}}} = digitalTwin:getDigitalTwinData(),
+        {ok,{_,Flow1}} = singleSystemController:getSystemFlow(),
+        {ok,{_,Temp1}} = singleSystemController:getSystemTemp(),
+        Data = {Flow1,0,Temp1,0},
         %Data= {N+1,N-1,N*2,N/2},
         ets:insert(stored_data, {N, Data}),
         timer:sleep(Delay),
@@ -28,7 +34,7 @@ loop({N,Delay})->
     end.
 
 storeData(N)->
-    {ok,File}=file:open("data.csv",write),
+    {ok,File}=file:open("data.csv",[write]),
     file:write(File,"Flow1,Flow2,Temp1,Temp2\n"),
     writeLine(N,0,File),
     file:close(File),
