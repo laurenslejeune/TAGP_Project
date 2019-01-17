@@ -33,9 +33,9 @@ start_link() ->
 init([]) ->
     survivor:start(),
     Double = true,
-    N_pipes = 7,
-    N_pumps = 6,
-    N_hex = 3,
+    N_pipes = 25,
+    N_pumps = 5,
+    N_hex = 7,
     SystemSupervisorSpec = #{id => systemsupervisor_child,
                         start => {systemSupervisor, create, [N_pipes,N_pumps,N_hex,Double]},
                         restart => permanent,

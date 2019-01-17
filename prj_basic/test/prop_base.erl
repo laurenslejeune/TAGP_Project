@@ -300,7 +300,7 @@ waitUntil(N,GetSystemFlowPid)->
 		(N_currently == N) ->
 			Flow;
 		(N_currently > N) ->
-			error;
+			Flow;
 		true ->
 			waitUntil(N,GetSystemFlowPid)
 	end.

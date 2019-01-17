@@ -4,7 +4,7 @@
 %-export([test/0]). 
 
 get(Pid, Key) ->
-	{ok,gen_server:call(Pid,{Key,R = make_ref()})}.
+	{ok,gen_server:call(Pid,{Key,_R = make_ref()})}.
 	%Pid ! {Key, replier(R = make_ref())},
 	%receive
 	%	{R, Info} -> {ok, Info}
@@ -12,7 +12,7 @@ get(Pid, Key) ->
 	%end.
 
 get(Pid, Key, P_list) -> 
-	{ok,gen_server:call(Pid,{Key,P_list,R=make_ref()})}.
+	{ok,gen_server:call(Pid,{Key,P_list,_R=make_ref()})}.
 	%io:format("MSG:Sending to ~p the key ~p with P_List ~p~n",[Pid,Key,P_list]),
 	%Pid ! {Key, P_list, replier(R = make_ref())},
 	%receive
@@ -21,7 +21,7 @@ get(Pid, Key, P_list) ->
 	%end.
 	
 set_ack(Pid, Key) -> % identical to get; for readability only. 
-	{ok,gen_server:call(Pid,{Key,R = make_ref()})}.
+	{ok,gen_server:call(Pid,{Key,_R = make_ref()})}.
 	%Pid ! {Key, replier(R = make_ref())},
 	%receive
 	%	{R, Info} -> {ok, Info}
@@ -29,7 +29,7 @@ set_ack(Pid, Key) -> % identical to get; for readability only.
 	%end.
 
 set_ack(Pid, Key, P_list) -> % identical to get; for readability only. 
-	{ok,gen_server:call(Pid,{Key,P_list,R=make_ref()})}.
+	{ok,gen_server:call(Pid,{Key,P_list, _R=make_ref()})}.
 	%Pid ! {Key, P_list, replier(R = make_ref())},
 	%receive
 	%	{R, Info} -> {ok, Info}

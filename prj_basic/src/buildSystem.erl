@@ -706,7 +706,7 @@ generateRandomSystem(N_pipes,N_pumps,N_he,true,DifList)->
 	HeatExchangers = generateNHeatExchangersWithDifList(N_he,HeatExTyp,Pipes,DifList),
 	{Pipes,Pumps,FlowMeterInst,HeatExchangers}.
 
-generateDigitalTwin({RefPipes,RefPumps,RefFlowMeter,RefHeatExchangers,RefGetSystemFlowPid,DifList})->
+generateDigitalTwin({RefPipes,RefPumps,_,RefHeatExchangers,RefGetSystemFlowPid,DifList})->
 	%In order to accurately represent the system, the structure needs to exactly the same as the given on:
 
 	%First, generate lists with pumps/heat exhangers on the same index as the pipe they represent:
